@@ -27,6 +27,11 @@ CONSISTENCY_WEIGHT = 0.05
 # A new player stays near 1500 until they have this many legal balls.
 COLD_BALLS = 30.0
 VENUE_BALLS = 2400.0
+# A phase, arm, and ladder cell is pulled toward the coarser rate with this many balls.
+EXPECTATION_BALLS = 30.0
+# Used only before any legal ball has been seen. Not fit on this file.
+PRIOR_RUNS = 1.0
+PRIOR_WICKET = 0.05
 # Every z-score is taken on players with at least this many decay-weighted legal balls.
 REFERENCE_BALLS = 30
 # A recognized batter is anyone listed at 1 to 7. Numbers 8 to 11 are the tail.
@@ -70,15 +75,25 @@ def zscore(value: pd.Series, reference: pd.Series) -> pd.Series:
     return ((value - center) / spread).clip(-3, 3)
 
 
+def zscore_within(value: pd.Series, groups: pd.Series, reference: pd.Series) -> pd.Series:
+    """The same z-score, taken inside each group so one role is not the scale for the others."""
+    out = pd.Series(0.0, index=value.index)
+    labels = groups.reindex(value.index).fillna("unknown")
+    for _, index in labels.groupby(labels, sort=False).groups.items():
+        out.loc[index] = zscore(value.loc[index], reference).to_numpy()
+    return out
+
+
 def career_rate(frame: pd.DataFrame, player_ids: pd.Index, player_col: str, value_col: str) -> pd.Series:
-    """Season means, with a missing season as zero, divided by the five-season weight total."""
+    """Decay-weighted mean of the rows a player has. A season with no rows is left out."""
     if frame.empty:
         return pd.Series(0.0, index=player_ids)
-    means = frame.groupby([player_col, "season"])[value_col].mean().unstack("season")
-    means = means.reindex(index=player_ids, columns=SEASONS).fillna(0.0)
-    weights = np.array([WEIGHT[year] for year in SEASONS])
-    rate = (means.to_numpy(dtype=float) * weights).sum(axis=1) / W_SUM
-    return pd.Series(rate, index=player_ids)
+    weights = frame["season"].map(WEIGHT).astype(float)
+    values = frame[value_col].astype(float) * weights
+    numer = values.groupby(frame[player_col]).sum()
+    denom = weights.groupby(frame[player_col]).sum()
+    rate = numer / denom.replace(0, np.nan)
+    return rate.reindex(player_ids).fillna(0.0)
 
 
 def weighted_count(frame: pd.DataFrame, player_col: str, player_ids: pd.Index) -> pd.Series:
@@ -377,12 +392,12 @@ def _ground_key(value):
 
 
 def _add_expected_shock(frame: pd.DataFrame) -> pd.DataFrame:
-    """Add the last six balls' wickets above xW, and runs above xR, to the shock. The current ball is excluded."""
+    """Add the last six balls' wickets above xW, and charged runs above xR, to the shock. The current ball is excluded."""
     ordered = frame.sort_values(["match_id", "innings", "n"], kind="mergesort")
     wickets = ordered["bowler_wicket"].fillna(False).astype(float).to_numpy()
-    runs = ordered["bat_runs"].to_numpy(dtype=float)
+    runs = ordered["charged_runs"].to_numpy(dtype=float)
     expected_wickets = ordered["x_wicket"].to_numpy(dtype=float)
-    expected_runs = ordered["x_runs"].to_numpy(dtype=float)
+    expected_runs = ordered["x_runs_bowl"].to_numpy(dtype=float)
     excess_wickets = np.zeros(len(ordered))
     excess_runs = np.zeros(len(ordered))
     offset = 0
@@ -414,7 +429,31 @@ def _add_expected_shock(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
-def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = None, k_run: float = 4.0, k_wicket: float = 16.0, k_team: float = 20.0) -> pd.DataFrame:
+def _expectation_keys(phase: str, arm: str, ladder: str) -> tuple[tuple, ...]:
+    """Coarse to fine. Each level is shrunk toward the one before it."""
+    return (
+        ("all",),
+        ("phase", phase),
+        ("phase_arm", phase, arm),
+        ("full", phase, arm, ladder),
+    )
+
+
+def _cell_mean(cells: dict[tuple, tuple[float, int]], key_chain: tuple[tuple, ...], prior: float) -> float:
+    mean = prior
+    for key in key_chain:
+        total, count = cells.get(key, (0.0, 0))
+        mean = (total + EXPECTATION_BALLS * mean) / (count + EXPECTATION_BALLS)
+    return mean
+
+
+def _add_cell(cells: dict[tuple, tuple[float, int]], key_chain: tuple[tuple, ...], value: float) -> None:
+    for key in key_chain:
+        total, count = cells.get(key, (0.0, 0))
+        cells[key] = (total + value, count + 1)
+
+
+def run_elo(legal: pd.DataFrame, venues: pd.Series | None = None, k_run: float = 4.0, k_wicket: float = 16.0, k_team: float = 20.0) -> pd.DataFrame:
     del venues  # Venue strength is fit from balls already bowled, inside this walk.
     frame = legal.sort_values(["match_date", "match_id", "innings", "innings_ball_num"], kind="mergesort")
     bat_rating: dict[tuple[int, str], float] = {}
@@ -426,9 +465,13 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
     ground_balls: dict[int, int] = {}
     seen_runs = 0.0
     seen_balls = 0
+    run_cells: dict[tuple, tuple[float, int]] = {}
+    charged_cells: dict[tuple, tuple[float, int]] = {}
+    wicket_cells: dict[tuple, tuple[float, int]] = {}
     e_bat = np.zeros(len(frame))
     e_bowl = np.zeros(len(frame))
     x_runs = np.zeros(len(frame))
+    x_runs_bowl = np.zeros(len(frame))
     x_wicket = np.zeros(len(frame))
 
     match_id = frame["match_id"].to_numpy()
@@ -483,20 +526,26 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
                 + 0.05 * (pre_side.get(int(batting_side[cursor]), 1500.0) - pre_side.get(int(bowling_side[cursor]), 1500.0)) / 400.0
                 + 0.10 * (ground_now - 1500.0) / 400.0
             )
-            key = (phase[cursor], arm[cursor])
-            mean_runs = mu.get(key, mu[("fallback", "fallback")])
-            wicket_rate = p0.get(key, p0[("fallback", "fallback")])
+            keys = _expectation_keys(str(phase[cursor]), str(arm[cursor]), str(this_ladder))
+            mean_runs = _cell_mean(run_cells, keys, PRIOR_RUNS)
+            mean_charged = _cell_mean(charged_cells, keys, PRIOR_RUNS)
+            wicket_rate = min(max(_cell_mean(wicket_cells, keys, PRIOR_WICKET), 0.002), 0.40)
             expected_runs = min(max(mean_runs * np.exp(gap), 0.0), 6.0)
+            expected_charged = min(max(mean_charged * np.exp(gap), 0.0), 6.0)
             expected_wicket = 1.0 / (1.0 + np.exp(-(_logit(wicket_rate) - gap)))
             expected_wicket = min(max(expected_wicket, 0.002), 0.40)
             x_runs[cursor] = expected_runs
+            x_runs_bowl[cursor] = expected_charged
             x_wicket[cursor] = expected_wicket
             out_flag = 1.0 if dismissed[cursor] else 0.0
             wicket_flag = 1.0 if bowler_wicket[cursor] else 0.0
             e_bat[cursor] = (runs[cursor] - expected_runs) - 4.0 * (out_flag - expected_wicket)
-            e_bowl[cursor] = (expected_runs - charged[cursor]) + 4.0 * (wicket_flag - expected_wicket)
+            e_bowl[cursor] = (expected_charged - charged[cursor]) + 4.0 * (wicket_flag - expected_wicket)
             bat_rating[bat_key] = batter_raw + k_run * (runs[cursor] - expected_runs) - k_wicket * (out_flag - expected_wicket)
-            bowl_rating[bowl_key] = bowler_raw - k_run * (runs[cursor] - expected_runs) + k_wicket * (wicket_flag - expected_wicket)
+            bowl_rating[bowl_key] = bowler_raw - k_run * (charged[cursor] - expected_charged) + k_wicket * (wicket_flag - expected_wicket)
+            _add_cell(run_cells, keys, float(runs[cursor]))
+            _add_cell(charged_cells, keys, float(charged[cursor]))
+            _add_cell(wicket_cells, keys, wicket_flag)
             bat_seen[bat_key] = bat_seen.get(bat_key, 0) + 1
             bowl_seen[bowl_key] = bowl_seen.get(bowl_key, 0) + 1
             if ground is not None:
@@ -524,6 +573,7 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
     scored["e_bat"] = e_bat
     scored["e_bowl"] = e_bowl
     scored["x_runs"] = x_runs
+    scored["x_runs_bowl"] = x_runs_bowl
     scored["x_wicket"] = x_wicket
     scored = _add_expected_shock(scored)
     bat_values = pd.Series(bat_rating)
@@ -546,8 +596,8 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
     return scored
 
 
-def fit_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = None) -> pd.DataFrame:
-    scored = run_elo(legal, mu, p0, venues)
+def fit_elo(legal: pd.DataFrame, venues: pd.Series | None = None) -> pd.DataFrame:
+    scored = run_elo(legal, venues)
     summary = scored.attrs["elo_summary"]
     spread_ok = (
         summary["batter_elo_sd"] <= 250
@@ -559,7 +609,7 @@ def fit_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
     )
     summary["step_sizes"] = "as written" if spread_ok else "halved once, ratings had reached the edges"
     if not spread_ok:
-        scored = run_elo(legal, mu, p0, venues, k_run=2.0, k_wicket=8.0, k_team=10.0)
+        scored = run_elo(legal, venues, k_run=2.0, k_wicket=8.0, k_team=10.0)
         summary = scored.attrs["elo_summary"]
         summary["step_sizes"] = "halved once, ratings had reached the edges"
         scored.attrs["elo_summary"] = summary
@@ -623,7 +673,8 @@ def innings_comparisons(spells: pd.DataFrame, player_col: str, metric: str, high
                     opp_z = 0.0
                 else:
                     gap = (values[position] - opp_mean) / spread
-                    opp_z = gap if higher_better else -gap
+                    signed = gap if higher_better else -gap
+                    opp_z = float(min(max(signed, -3.0), 3.0))
             available = [item for item in (team_z, opp_z) if pd.notna(item)]
             combined = float(np.mean(available)) if available else np.nan
             rows.append({
@@ -676,20 +727,39 @@ def form_by_season(events: pd.DataFrame, player_col: str, metric: str, career: p
     return pd.DataFrame(rows)
 
 
-def consistency_score(match_values: pd.DataFrame, player_col: str, value_col: str, players: pd.Index, reference: pd.Series) -> pd.Series:
+def consistency_score(match_values: pd.DataFrame, player_col: str, value_col: str, players: pd.Index, reference: pd.Series, groups: pd.Series | None = None) -> pd.Series:
     grouped = match_values.groupby(player_col)[value_col]
     counts = grouped.size().reindex(players).fillna(0)
     spreads = grouped.std(ddof=0).reindex(players)
-    known = spreads.dropna()
-    ref_known = known[reference.reindex(known.index).fillna(False).astype(bool)]
-    typical = float(ref_known.mean()) if len(ref_known) else float(known.mean()) if len(known) else 0.0
-    filled = spreads.fillna(typical)
-    shrunk = shrink(filled, counts, typical, 8)
-    return zscore(-shrunk, reference)
+    if groups is None:
+        known = spreads.dropna()
+        ref_known = known[reference.reindex(known.index).fillna(False).astype(bool)]
+        typical = float(ref_known.mean()) if len(ref_known) else float(known.mean()) if len(known) else 0.0
+        filled = spreads.fillna(typical)
+        shrunk = shrink(filled, counts, typical, 8)
+        return zscore(-shrunk, reference)
+    signed = pd.Series(0.0, index=players)
+    labels = groups.reindex(players).fillna("unknown")
+    for _, index in labels.groupby(labels, sort=False).groups.items():
+        role_players = pd.Index(index)
+        known = spreads.reindex(role_players).dropna()
+        ref_known = known[reference.reindex(known.index).fillna(False).astype(bool)]
+        typical = float(ref_known.mean()) if len(ref_known) else float(known.mean()) if len(known) else 0.0
+        filled = spreads.reindex(role_players).fillna(typical)
+        shrunk = shrink(filled, counts.reindex(role_players), typical, 8)
+        signed.loc[role_players] = zscore(-shrunk, reference).to_numpy()
+    return signed
 
 
 def component_frame(raw: pd.Series, players: pd.Index, reference: pd.Series) -> pd.Series:
     return zscore(raw.reindex(players).fillna(0.0), reference)
+
+
+def _clutch_spell(own_gap: pd.Series, teammate_z: pd.Series) -> pd.Series:
+    """A spell below the player's own rate stays negative. A spell above it scales with beating teammates."""
+    own_gap = own_gap.astype(float)
+    beaten = own_gap.gt(0)
+    return own_gap.where(~beaten, own_gap * teammate_z.astype(float).clip(lower=0))
 
 
 def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
@@ -721,7 +791,8 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
 
     n_eff = weighted_count(legal, player, ids)
     reference = n_eff.ge(REFERENCE_BALLS)
-    base = 0.5 * zscore(shrunk_sr - expected_sr, reference) + 0.5 * zscore(shrunk_average - expected_average, reference)
+    roles = orders.reindex(ids).map(_batting_role)
+    base = 0.5 * zscore_within(shrunk_sr - expected_sr, roles, reference) + 0.5 * zscore_within(shrunk_average - expected_average, roles, reference)
 
     band_z = {}
     high_n = weighted_count(legal.loc[legal["band"].eq("high")], player, ids)
@@ -729,7 +800,7 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
         subset = legal.loc[legal["band"].eq(band), [player, "season", "e_bat"]]
         raw = career_rate(subset, ids, player, "e_bat")
         count = weighted_count(subset, player, ids)
-        band_z[band] = zscore(shrink(raw, count, 0.0, 30), reference)
+        band_z[band] = zscore_within(shrink(raw, count, 0.0, 30), roles, reference)
 
     innings = (
         legal.groupby(["match_id", "innings", player, "season", "match_date"], sort=False)
@@ -744,7 +815,7 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
     ]
     peer_mean = compared.groupby(player)["z_passage"].mean()
     peer_n = compared.groupby(player)["z_passage"].count()
-    peer = component_frame(shrink(peer_mean, peer_n, 0.0, 5), ids, reference)
+    peer = zscore_within(shrink(peer_mean, peer_n, 0.0, 5).reindex(ids).fillna(0.0), roles, reference)
     stood_out = compared.loc[compared["label"].eq("stood out")].groupby(player).size()
     passages = compared.groupby(player).size()
     stood_share = (stood_out / passages).reindex(ids)
@@ -761,17 +832,18 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
     if not np.isfinite(scale) or scale == 0:
         scale = 1.0
     clutch_rows = high_compared.dropna(subset=["z_team"]).copy()
-    clutch_rows["clutch"] = ((clutch_rows["metric"] - clutch_rows[player].map(strike_rate)) / scale) * clutch_rows["z_team"]
+    own_gap = (clutch_rows["metric"] - clutch_rows[player].map(strike_rate)) / scale
+    clutch_rows["clutch"] = _clutch_spell(own_gap, clutch_rows["z_team"])
     clutch_mean = clutch_rows.groupby(player)["clutch"].mean()
     clutch_n = clutch_rows.groupby(player)["clutch"].count()
-    clutch = component_frame(shrink(clutch_mean, clutch_n, 0.0, 5), ids, reference)
+    clutch = zscore_within(shrink(clutch_mean, clutch_n, 0.0, 5).reindex(ids).fillna(0.0), roles, reference)
 
     qualified = innings.loc[innings["balls"].ge(6)].copy()
     form = form_by_season(qualified, player, "sr", strike_rate, True)
     form_n = qualified.groupby(player).size().reindex(ids).fillna(0.0)
-    form_score = zscore(shrink(career_rate(form, ids, player, "form"), form_n, 0.0, 8), reference)
+    form_score = zscore_within(shrink(career_rate(form, ids, player, "form"), form_n, 0.0, 8), roles, reference)
     match_values = qualified.groupby([player, "match_id"], sort=False)["e_bat"].mean().reset_index()
-    consistency = consistency_score(match_values, player, "e_bat", ids, reference)
+    consistency = consistency_score(match_values, player, "e_bat", ids, reference, roles)
 
     composite = (
         BASELINE_WEIGHT * base
@@ -903,7 +975,8 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
     if not np.isfinite(scale) or scale == 0:
         scale = 1.0
     clutch_rows = high_compared.dropna(subset=["z_team"]).copy()
-    clutch_rows["clutch"] = ((clutch_rows[player].map(economy) - clutch_rows["metric"]) / scale) * clutch_rows["z_team"]
+    own_gap = (clutch_rows[player].map(economy) - clutch_rows["metric"]) / scale
+    clutch_rows["clutch"] = _clutch_spell(own_gap, clutch_rows["z_team"])
     clutch_mean = clutch_rows.groupby(player)["clutch"].mean()
     clutch_n = clutch_rows.groupby(player)["clutch"].count()
     clutch = component_frame(shrink(clutch_mean, clutch_n, 0.0, 5), ids, reference)
