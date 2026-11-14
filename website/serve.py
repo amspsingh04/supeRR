@@ -69,7 +69,7 @@ def _z(value, center, spread):
 
 class Site:
     def __init__(self, path: Path):
-        self.connection = sqlite3.connect(path, check_same_thread=False)
+        self.connection = sqlite3.connect(f"{path.as_uri()}?mode=ro&immutable=1", uri=True, check_same_thread=False)
         self.connection.row_factory = sqlite3.Row
         self.matches = {}
         if MATCHES.exists():

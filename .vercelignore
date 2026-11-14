@@ -1,0 +1,9 @@
+*.csv
+!silver/matches.csv
+*.pdf
+*.ipynb
+player_ratings.py
+ratings/
+exports/
+__pycache__/
+**/__pycache__/

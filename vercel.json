@@ -1,0 +1,10 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "website/static",
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }],
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "{website/serve.py,website/data/ratings.db,silver/matches.csv}"
+    }
+  }
+}
