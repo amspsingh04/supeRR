@@ -14,6 +14,19 @@ SEASONS = [2022, 2023, 2024, 2025, 2026]
 WEIGHT = {year: 0.9 ** (2026 - year) for year in SEASONS}
 W_SUM = float(sum(WEIGHT.values()))
 BANDS = ["zero", "medium", "high"]
+# The eight shares 0.15, 0.10, 0.15, 0.20, 0.15, 0.10, 0.05, 0.05 summed to 0.95.
+# The missing 0.05 is added to baseline, the player's usual rates.
+BASELINE_WEIGHT = 0.20
+ZERO_WEIGHT = 0.10
+MEDIUM_WEIGHT = 0.15
+HIGH_WEIGHT = 0.20
+CLUTCH_WEIGHT = 0.15
+PEERS_WEIGHT = 0.10
+FORM_WEIGHT = 0.05
+CONSISTENCY_WEIGHT = 0.05
+# A new player stays near 1500 until they have this many legal balls.
+COLD_BALLS = 30.0
+VENUE_BALLS = 2400.0
 
 
 def find_silver() -> Path:
@@ -131,8 +144,10 @@ def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     first_total = work.loc[work["innings"].eq(1)].groupby("match_id")["team_run"].sum()
     legal["target"] = legal["revised_target"]
     missing_target = legal["target"].isna() | legal["target"].le(0)
-    legal.loc[missing_target, "target"] = legal.loc[missing_target, "match_id"].map(first_total)
-    chase = legal["innings"].eq(2) & legal["target"].notna() & legal["left"].gt(0)
+    # An ordinary chase needs one more than the first innings. A DLS target is used as supplied.
+    legal.loc[missing_target, "target"] = legal.loc[missing_target, "match_id"].map(first_total) + 1
+    reduced_without_target = legal["is_reduced"].fillna(False).astype(bool) & missing_target
+    chase = legal["innings"].eq(2) & legal["target"].notna() & legal["left"].gt(0) & ~reduced_without_target
     needed = (legal["target"] - legal["runs_before"]).clip(lower=0)
     legal["rrr"] = np.where(chase, needed / (legal["left"] / 6.0), np.nan)
     legal["crr"] = np.where(legal["n"].gt(1), legal["runs_before"] / ((legal["n"] - 1) / 6.0), np.nan)
@@ -218,11 +233,29 @@ def _logit(probability: float) -> float:
     return float(np.log(probability / (1 - probability)))
 
 
-def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series, k_run: float = 4.0, k_wicket: float = 16.0, k_team: float = 20.0) -> pd.DataFrame:
+def _pulled_to_mean(raw: float, balls_seen: int) -> float:
+    """A short career stays near 1500. A long career uses the raw rating."""
+    return (balls_seen * raw + COLD_BALLS * 1500.0) / (balls_seen + COLD_BALLS)
+
+
+def _ground_key(value):
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return None
+    return int(value)
+
+
+def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = None, k_run: float = 4.0, k_wicket: float = 16.0, k_team: float = 20.0) -> pd.DataFrame:
+    del venues  # Venue strength is fit from balls already bowled, inside this walk.
     frame = legal.sort_values(["match_date", "match_id", "innings", "innings_ball_num"], kind="mergesort")
     bat_rating: dict[tuple[int, str], float] = {}
     bowl_rating: dict[tuple[int, str], float] = {}
+    bat_seen: dict[tuple[int, str], int] = {}
+    bowl_seen: dict[tuple[int, str], int] = {}
     team_rating: dict[tuple[int, str], float] = {}
+    ground_runs: dict[int, float] = {}
+    ground_balls: dict[int, int] = {}
+    seen_runs = 0.0
+    seen_balls = 0
     e_bat = np.zeros(len(frame))
     e_bowl = np.zeros(len(frame))
 
@@ -259,12 +292,24 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series, k_run: f
         for cursor in range(row, stop):
             striker_id = int(striker[cursor])
             bowler_id = int(bowler[cursor])
-            batter_now = bat_rating.get((striker_id, this_ladder), 1500.0)
-            bowler_now = bowl_rating.get((bowler_id, this_ladder), 1500.0)
+            bat_key = (striker_id, this_ladder)
+            bowl_key = (bowler_id, this_ladder)
+            batter_raw = bat_rating.get(bat_key, 1500.0)
+            bowler_raw = bowl_rating.get(bowl_key, 1500.0)
+            batter_now = _pulled_to_mean(batter_raw, bat_seen.get(bat_key, 0))
+            bowler_now = _pulled_to_mean(bowler_raw, bowl_seen.get(bowl_key, 0))
+            ground = _ground_key(venue_id[cursor])
+            ground_n = ground_balls.get(ground, 0) if ground is not None else 0
+            if ground is None or ground_n == 0 or seen_balls == 0:
+                ground_now = 1500.0
+            else:
+                ground_rate = ground_runs[ground] / ground_n
+                historic = seen_runs / seen_balls
+                ground_now = 1500.0 + 1000.0 * (ground_n / (ground_n + VENUE_BALLS)) * (ground_rate - historic)
             gap = (
                 0.15 * (batter_now - bowler_now) / 400.0
                 + 0.05 * (pre_side.get(int(batting_side[cursor]), 1500.0) - pre_side.get(int(bowling_side[cursor]), 1500.0)) / 400.0
-                + 0.10 * (float(venues.get(venue_id[cursor], 1500.0)) - 1500.0) / 400.0
+                + 0.10 * (ground_now - 1500.0) / 400.0
             )
             key = (phase[cursor], arm[cursor])
             mean_runs = mu.get(key, mu[("fallback", "fallback")])
@@ -276,8 +321,15 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series, k_run: f
             wicket_flag = 1.0 if bowler_wicket[cursor] else 0.0
             e_bat[cursor] = (runs[cursor] - expected_runs) - 4.0 * (out_flag - expected_wicket)
             e_bowl[cursor] = (expected_runs - charged[cursor]) + 4.0 * (wicket_flag - expected_wicket)
-            bat_rating[(striker_id, this_ladder)] = batter_now + k_run * (runs[cursor] - expected_runs) - k_wicket * (out_flag - expected_wicket)
-            bowl_rating[(bowler_id, this_ladder)] = bowler_now - k_run * (runs[cursor] - expected_runs) + k_wicket * (wicket_flag - expected_wicket)
+            bat_rating[bat_key] = batter_raw + k_run * (runs[cursor] - expected_runs) - k_wicket * (out_flag - expected_wicket)
+            bowl_rating[bowl_key] = bowler_raw - k_run * (runs[cursor] - expected_runs) + k_wicket * (wicket_flag - expected_wicket)
+            bat_seen[bat_key] = bat_seen.get(bat_key, 0) + 1
+            bowl_seen[bowl_key] = bowl_seen.get(bowl_key, 0) + 1
+            if ground is not None:
+                ground_runs[ground] = ground_runs.get(ground, 0.0) + runs[cursor]
+                ground_balls[ground] = ground_n + 1
+                seen_runs += runs[cursor]
+                seen_balls += 1
         win_value = winner[row]
         no_winner = pd.isna(win_value)
 
@@ -311,12 +363,13 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series, k_run: f
         "bowler_elo_sd": float(bowl_values.std(ddof=0)),
         "team_elo_min": float(min(team_rating.values())),
         "team_elo_max": float(max(team_rating.values())),
+        "grounds": int(len(ground_balls)),
     }
     scored.attrs["elo_summary"] = summary
     return scored
 
 
-def fit_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series) -> pd.DataFrame:
+def fit_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = None) -> pd.DataFrame:
     scored = run_elo(legal, mu, p0, venues)
     summary = scored.attrs["elo_summary"]
     spread_ok = (
@@ -543,14 +596,14 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
     consistency = consistency_score(match_values, player, "e_bat", ids, reference)
 
     composite = (
-        0.15 * base
-        + 0.10 * band_z["zero"]
-        + 0.15 * band_z["medium"]
-        + 0.20 * band_z["high"]
-        + 0.15 * clutch
-        + 0.10 * peer
-        + 0.05 * form_score
-        + 0.05 * consistency
+        BASELINE_WEIGHT * base
+        + ZERO_WEIGHT * band_z["zero"]
+        + MEDIUM_WEIGHT * band_z["medium"]
+        + HIGH_WEIGHT * band_z["high"]
+        + CLUTCH_WEIGHT * clutch
+        + PEERS_WEIGHT * peer
+        + FORM_WEIGHT * form_score
+        + CONSISTENCY_WEIGHT * consistency
     )
     ranked = n_eff.ge(120) & high_n.ge(30)
     table = pd.DataFrame({
@@ -684,14 +737,14 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
     consistency = consistency_score(match_values, player, "e_bowl", ids, reference)
 
     composite = (
-        0.15 * base
-        + 0.10 * band_z["zero"]
-        + 0.15 * band_z["medium"]
-        + 0.20 * band_z["high"]
-        + 0.15 * clutch
-        + 0.10 * peer
-        + 0.05 * form_score
-        + 0.05 * consistency
+        BASELINE_WEIGHT * base
+        + ZERO_WEIGHT * band_z["zero"]
+        + MEDIUM_WEIGHT * band_z["medium"]
+        + HIGH_WEIGHT * band_z["high"]
+        + CLUTCH_WEIGHT * clutch
+        + PEERS_WEIGHT * peer
+        + FORM_WEIGHT * form_score
+        + CONSISTENCY_WEIGHT * consistency
     )
     ranked = n_eff.ge(120) & high_n.ge(30)
     table = pd.DataFrame({
