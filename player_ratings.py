@@ -27,6 +27,19 @@ CONSISTENCY_WEIGHT = 0.05
 # A new player stays near 1500 until they have this many legal balls.
 COLD_BALLS = 30.0
 VENUE_BALLS = 2400.0
+# Every z-score is taken on players with at least this many decay-weighted legal balls.
+REFERENCE_BALLS = 30
+# A recognized batter is anyone listed at 1 to 7. Numbers 8 to 11 are the tail.
+RECOGNIZED_ORDER = 7
+OCCASION = {
+    "Final": 3.0,
+    "Semi Final": 2.0,
+    "Qualifier": 1.5,
+    "Eliminator": 1.5,
+    "Super 4": 1.3,
+    "League": 1.0,
+    "Others": 0.8,
+}
 
 
 def find_silver() -> Path:
@@ -88,7 +101,7 @@ def load() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         validate="many_to_one",
     )
     context = [
-        "match_id", "match_date", "season", "comp_group", "comp_name", "stage", "venue_id",
+        "match_id", "match_date", "season", "comp_id", "comp_group", "comp_name", "stage", "venue_id",
         "home_team_id", "away_team_id", "knock_out", "win_team_id", "revised_target",
         "first_innings_balls", "second_innings_balls", "is_reduced",
     ]
@@ -151,30 +164,7 @@ def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     needed = (legal["target"] - legal["runs_before"]).clip(lower=0)
     legal["rrr"] = np.where(chase, needed / (legal["left"] / 6.0), np.nan)
     legal["crr"] = np.where(legal["n"].gt(1), legal["runs_before"] / ((legal["n"] - 1) / 6.0), np.nan)
-
-    phase_points = legal["phase"].map({"powerplay": 0, "middle": 1, "death": 2}).astype(int)
-    wickets = legal["wickets_before"]
-    wicket_points = np.where(wickets <= 2, 0, np.where(wickets <= 5, 1, 2))
-    left = legal["left"]
-    left_points = np.where(~chase, 0, np.where(left <= 18, 2, np.where(left <= 36, 1, 0)))
-    rate = legal["rrr"]
-    rate_points = np.where(~chase, 0, np.where(rate >= 12, 2, np.where(rate >= 8, 1, 0)))
-    stakes = np.where(legal["stage"].eq("Final"), 2, np.where(legal["knock_out"].fillna(0).astype(int).eq(1), 1, 0))
-    rain = legal["is_reduced"].fillna(False).astype(bool).astype(int)
-    in_hand = 10 - wickets
-    close = (
-        chase
-        & left.le(24)
-        & in_hand.le(5)
-        & legal["n"].gt(1)
-        & (legal["crr"] - legal["rrr"]).abs().lt(2)
-    ).astype(int)
-    legal["pressure_points"] = phase_points + wicket_points + left_points + rate_points + stakes + rain + close
-    legal["band"] = np.where(
-        legal["pressure_points"] <= 2,
-        "zero",
-        np.where(legal["pressure_points"] <= 5, "medium", "high"),
-    )
+    legal = _attach_pressure(legal)
     legal["striker_out"] = legal["wicket_flag"].eq(1) & legal["dismissed_player_id"].eq(legal["striker_id"])
     legal["bowler_wicket"] = legal["is_bowler_wicket"].fillna(False).astype(bool)
     bye = legal["extras_label"].isin(["bye", "leg-bye", "penalty"])
@@ -183,6 +173,148 @@ def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     legal["match_date"] = pd.to_datetime(legal["match_date"])
     work["match_date"] = pd.to_datetime(work["match_date"])
     return work, legal
+
+
+def _dead_series_matches(legal: pd.DataFrame) -> set[int]:
+    """A bilateral match is a dead rubber once one side has already won the series."""
+    series = legal.loc[legal["stage"].eq("Others"), ["comp_id", "match_id", "match_date", "win_team_id", "home_team_id", "away_team_id"]]
+    series = series.drop_duplicates("match_id")
+    dead: set[int] = set()
+    for _, frame in series.groupby("comp_id"):
+        ordered = frame.sort_values(["match_date", "match_id"])
+        needed = len(ordered) // 2 + 1
+        wins: dict[int, int] = {}
+        for row in ordered.itertuples(index=False):
+            if wins.get(int(row.home_team_id), 0) >= needed or wins.get(int(row.away_team_id), 0) >= needed:
+                dead.add(int(row.match_id))
+            if pd.notna(row.win_team_id):
+                winner = int(row.win_team_id)
+                wins[winner] = wins.get(winner, 0) + 1
+    return dead
+
+
+def _competition_weight(legal: pd.DataFrame) -> pd.Series:
+    name = legal["comp_name"].fillna("")
+    minor = name.str.contains("Emerging|Rising", case=False, regex=True) | legal["comp_group"].eq("Other T20")
+    return pd.Series(np.where(minor, 0.7, 1.0), index=legal.index)
+
+
+def _ball_difficulty(legal: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+    """Each skill's ball is scaled from 0 to 1. Wickets down raise the batter and lower the bowler."""
+    phase = legal["phase"]
+    batter_phase = phase.map({"powerplay": 0.25, "middle": 0.10, "death": 0.40}).fillna(0.10)
+    recognized = legal["batting_order"].notna() & legal["batting_order"].le(RECOGNIZED_ORDER)
+    bowler_phase = phase.map({"powerplay": 0.32, "middle": 0.24}).fillna(0.24)
+    bowler_phase = bowler_phase.where(~phase.eq("death"), np.where(recognized, 0.32, 0.14))
+    wickets = legal["wickets_before"].to_numpy()
+    batter_wickets = np.where(wickets <= 1, 0.0, np.where(wickets <= 4, 0.15, 0.30))
+    bowler_wickets = np.where(wickets <= 1, 0.0, np.where(wickets <= 4, -0.10, -0.25))
+    rate = legal["rrr"].to_numpy(dtype=float)
+    chase = legal["innings"].eq(2) & np.isfinite(rate)
+    rate_term = np.where(~chase, 0.0, np.where(rate >= 12, 0.30, np.where(rate >= 8, 0.15, 0.0)))
+    batter = pd.Series(np.clip(batter_phase.to_numpy() + batter_wickets + rate_term, 0.0, 1.0), index=legal.index)
+    bowler = pd.Series(np.clip(bowler_phase.to_numpy() + bowler_wickets + rate_term, 0.0, 1.0), index=legal.index)
+    return batter, bowler
+
+
+def _shock_and_delta(legal: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Last six balls, and the last six against the previous eighteen. Current ball is excluded."""
+    ordered = legal.sort_values(["match_id", "innings", "n"], kind="mergesort")
+    real_wicket = ordered["wicket_flag"].eq(1) & ~ordered["dismissal_type"].isin(["Retire Out", "Obstructing the field"])
+    four = ordered["bat_runs"].eq(4)
+    six = ordered["bat_runs"].ge(6)
+    dot = ordered["bat_runs"].eq(0) & ~real_wicket
+    shock_batter = np.zeros(len(ordered))
+    shock_bowler = np.zeros(len(ordered))
+    gap_wickets = np.full(len(ordered), np.nan)
+    gap_runs = np.full(len(ordered), np.nan)
+    offset = 0
+    for _, frame in ordered.groupby(["match_id", "innings"], sort=False):
+        wickets = real_wicket.loc[frame.index].to_numpy(dtype=float)
+        fours = four.loc[frame.index].to_numpy(dtype=float)
+        sixes = six.loc[frame.index].to_numpy(dtype=float)
+        dots = dot.loc[frame.index].to_numpy(dtype=float)
+        runs = frame["bat_runs"].to_numpy(dtype=float)
+        count = len(frame)
+        wicket_sum = np.cumsum(wickets)
+        four_sum = np.cumsum(fours)
+        six_sum = np.cumsum(sixes)
+        dot_sum = np.cumsum(dots)
+        run_sum = np.cumsum(runs)
+        for position in range(6, count):
+            end = position - 1
+            before = end - 6
+            wicket_6 = wicket_sum[end] - (wicket_sum[before] if before >= 0 else 0.0)
+            four_6 = four_sum[end] - (four_sum[before] if before >= 0 else 0.0)
+            six_6 = six_sum[end] - (six_sum[before] if before >= 0 else 0.0)
+            dot_6 = dot_sum[end] - (dot_sum[before] if before >= 0 else 0.0)
+            # A wicket is the large step. A dot is the small one. Three wickets still reach 1.
+            shock_batter[offset + position] = min(1.0, 0.33 * wicket_6 + 0.05 * dot_6)
+            # A six is the large step. A four is the small one. Three sixes still reach 1.
+            shock_bowler[offset + position] = min(1.0, 0.33 * six_6 + 0.12 * four_6)
+            if position >= 18:
+                run_6 = run_sum[end] - run_sum[end - 6]
+                gap_wickets[offset + position] = wicket_6 / 6.0 - (wicket_sum[end] - wicket_sum[end - 18]) / 18.0
+                gap_runs[offset + position] = run_6 / 6.0 - (run_sum[end] - run_sum[end - 18]) / 18.0
+        offset += count
+    gap_wickets = pd.Series(gap_wickets, index=ordered.index)
+    gap_runs = pd.Series(gap_runs, index=ordered.index)
+    shock_batter = pd.Series(shock_batter, index=ordered.index)
+    shock_bowler = pd.Series(shock_bowler, index=ordered.index)
+    wicket_scale = float(gap_wickets.std(ddof=0))
+    run_scale = float(gap_runs.std(ddof=0))
+    if not np.isfinite(wicket_scale) or wicket_scale == 0:
+        wicket_scale = 1.0
+    if not np.isfinite(run_scale) or run_scale == 0:
+        run_scale = 1.0
+    delta_batter = (gap_wickets / wicket_scale).clip(-0.5, 1.0).fillna(0.0)
+    delta_bowler = (gap_runs / run_scale).clip(-0.5, 1.0).fillna(0.0)
+    return (
+        shock_batter.reindex(legal.index).to_numpy(dtype=float),
+        shock_bowler.reindex(legal.index).to_numpy(dtype=float),
+        delta_batter.reindex(legal.index).to_numpy(dtype=float),
+        delta_bowler.reindex(legal.index).to_numpy(dtype=float),
+    )
+
+
+def _cut_band(pressure: pd.Series) -> pd.Series:
+    """High is the top fifth of this pressure. Medium is the next 30 percent."""
+    high_cut = float(pressure.quantile(0.80))
+    medium_cut = float(pressure.quantile(0.50))
+    labels = np.where(pressure >= high_cut, "high", np.where(pressure >= medium_cut, "medium", "zero"))
+    return pd.Series(labels, index=pressure.index)
+
+
+def _cut_band_within(pressure: pd.Series, groups: pd.Series) -> pd.Series:
+    """The same top-fifth cut inside each bowling type, so pace and spin are not split by role."""
+    labels = pd.Series("zero", index=pressure.index, dtype=object)
+    for _, index in pressure.groupby(groups.fillna("unknown"), sort=False).groups.items():
+        labels.loc[index] = _cut_band(pressure.loc[index]).to_numpy()
+    return labels
+
+
+def _attach_pressure(legal: pd.DataFrame) -> pd.DataFrame:
+    """Occasion, competition, and the ball, plus the shock and the break in rhythm."""
+    dead = _dead_series_matches(legal)
+    occasion = legal["stage"].map(OCCASION).fillna(1.0).astype(float)
+    occasion = occasion.where(~legal["match_id"].isin(dead), 0.4)
+    competition = _competition_weight(legal)
+    batter_ball, bowler_ball = _ball_difficulty(legal)
+    shock_batter, shock_bowler, delta_batter, delta_bowler = _shock_and_delta(legal)
+    legal = legal.copy()
+    legal["shock_bat"] = shock_batter
+    legal["shock_bowl"] = shock_bowler
+    legal["delta_bat"] = delta_batter
+    legal["delta_bowl"] = delta_bowler
+    legal["occasion"] = occasion.to_numpy()
+    legal["competition"] = competition.to_numpy()
+    legal["ball_bat"] = batter_ball.to_numpy()
+    legal["ball_bowl"] = bowler_ball.to_numpy()
+    legal["pressure_bat"] = legal["occasion"] * legal["competition"] * legal["ball_bat"] + legal["shock_bat"] + legal["delta_bat"]
+    legal["pressure_bowl"] = legal["occasion"] * legal["competition"] * legal["ball_bowl"] + legal["shock_bowl"] + legal["delta_bowl"]
+    legal["band"] = _cut_band(legal["pressure_bat"])
+    legal["band_bowl"] = _cut_band_within(legal["pressure_bowl"], legal["pace_or_spin"])
+    return legal
 
 
 def band_summary(legal: pd.DataFrame) -> pd.DataFrame:
@@ -244,6 +376,44 @@ def _ground_key(value):
     return int(value)
 
 
+def _add_expected_shock(frame: pd.DataFrame) -> pd.DataFrame:
+    """Add the last six balls' wickets above xW, and runs above xR, to the shock. The current ball is excluded."""
+    ordered = frame.sort_values(["match_id", "innings", "n"], kind="mergesort")
+    wickets = ordered["bowler_wicket"].fillna(False).astype(float).to_numpy()
+    runs = ordered["bat_runs"].to_numpy(dtype=float)
+    expected_wickets = ordered["x_wicket"].to_numpy(dtype=float)
+    expected_runs = ordered["x_runs"].to_numpy(dtype=float)
+    excess_wickets = np.zeros(len(ordered))
+    excess_runs = np.zeros(len(ordered))
+    offset = 0
+    for _, part in ordered.groupby(["match_id", "innings"], sort=False):
+        count = len(part)
+        wicket_gap = np.cumsum(wickets[offset:offset + count] - expected_wickets[offset:offset + count])
+        run_gap = np.cumsum(runs[offset:offset + count] - expected_runs[offset:offset + count])
+        for position in range(6, count):
+            end = position - 1
+            before = end - 6
+            excess_wickets[offset + position] = wicket_gap[end] - (wicket_gap[before] if before >= 0 else 0.0)
+            excess_runs[offset + position] = run_gap[end] - (run_gap[before] if before >= 0 else 0.0)
+        offset += count
+    wicket_scale = float(pd.Series(excess_wickets).std(ddof=0))
+    run_scale = float(pd.Series(excess_runs).std(ddof=0))
+    if not np.isfinite(wicket_scale) or wicket_scale == 0:
+        wicket_scale = 1.0
+    if not np.isfinite(run_scale) or run_scale == 0:
+        run_scale = 1.0
+    extra_wickets = pd.Series(excess_wickets / wicket_scale, index=ordered.index).clip(-0.5, 1.0)
+    extra_runs = pd.Series(excess_runs / run_scale, index=ordered.index).clip(-0.5, 1.0)
+    frame = frame.copy()
+    frame["shock_bat"] = (frame["shock_bat"] + extra_wickets.reindex(frame.index).fillna(0.0)).clip(-0.5, 1.0)
+    frame["shock_bowl"] = (frame["shock_bowl"] + extra_runs.reindex(frame.index).fillna(0.0)).clip(-0.5, 1.0)
+    frame["pressure_bat"] = frame["occasion"] * frame["competition"] * frame["ball_bat"] + frame["shock_bat"] + frame["delta_bat"]
+    frame["pressure_bowl"] = frame["occasion"] * frame["competition"] * frame["ball_bowl"] + frame["shock_bowl"] + frame["delta_bowl"]
+    frame["band"] = _cut_band(frame["pressure_bat"])
+    frame["band_bowl"] = _cut_band_within(frame["pressure_bowl"], frame["pace_or_spin"])
+    return frame
+
+
 def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = None, k_run: float = 4.0, k_wicket: float = 16.0, k_team: float = 20.0) -> pd.DataFrame:
     del venues  # Venue strength is fit from balls already bowled, inside this walk.
     frame = legal.sort_values(["match_date", "match_id", "innings", "innings_ball_num"], kind="mergesort")
@@ -258,6 +428,8 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
     seen_balls = 0
     e_bat = np.zeros(len(frame))
     e_bowl = np.zeros(len(frame))
+    x_runs = np.zeros(len(frame))
+    x_wicket = np.zeros(len(frame))
 
     match_id = frame["match_id"].to_numpy()
     ladder = frame["ladder"].to_numpy()
@@ -317,6 +489,8 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
             expected_runs = min(max(mean_runs * np.exp(gap), 0.0), 6.0)
             expected_wicket = 1.0 / (1.0 + np.exp(-(_logit(wicket_rate) - gap)))
             expected_wicket = min(max(expected_wicket, 0.002), 0.40)
+            x_runs[cursor] = expected_runs
+            x_wicket[cursor] = expected_wicket
             out_flag = 1.0 if dismissed[cursor] else 0.0
             wicket_flag = 1.0 if bowler_wicket[cursor] else 0.0
             e_bat[cursor] = (runs[cursor] - expected_runs) - 4.0 * (out_flag - expected_wicket)
@@ -349,6 +523,9 @@ def run_elo(legal: pd.DataFrame, mu: dict, p0: dict, venues: pd.Series | None = 
     scored = frame.copy()
     scored["e_bat"] = e_bat
     scored["e_bowl"] = e_bowl
+    scored["x_runs"] = x_runs
+    scored["x_wicket"] = x_wicket
+    scored = _add_expected_shock(scored)
     bat_values = pd.Series(bat_rating)
     bowl_values = pd.Series(bowl_rating)
     summary = {
@@ -543,7 +720,7 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
     shrunk_average = shrunk_average.where(dismissals.gt(0), expected_average)
 
     n_eff = weighted_count(legal, player, ids)
-    reference = n_eff.ge(30)
+    reference = n_eff.ge(REFERENCE_BALLS)
     base = 0.5 * zscore(shrunk_sr - expected_sr, reference) + 0.5 * zscore(shrunk_average - expected_average, reference)
 
     band_z = {}
@@ -591,7 +768,8 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
 
     qualified = innings.loc[innings["balls"].ge(6)].copy()
     form = form_by_season(qualified, player, "sr", strike_rate, True)
-    form_score = component_frame(career_rate(form, ids, player, "form"), ids, reference)
+    form_n = qualified.groupby(player).size().reindex(ids).fillna(0.0)
+    form_score = zscore(shrink(career_rate(form, ids, player, "form"), form_n, 0.0, 8), reference)
     match_values = qualified.groupby([player, "match_id"], sort=False)["e_bat"].mean().reset_index()
     consistency = consistency_score(match_values, player, "e_bat", ids, reference)
 
@@ -682,13 +860,13 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
     shrunk_balls = shrink(balls_per_wicket.fillna(expected_balls), wickets, expected_balls, 4)
     shrunk_balls = shrunk_balls.where(wickets.gt(0), expected_balls)
     n_eff = weighted_count(legal, player, ids)
-    reference = n_eff.ge(30)
+    reference = n_eff.ge(REFERENCE_BALLS)
     base = 0.5 * zscore(expected_economy - shrunk_economy, reference) + 0.5 * zscore(expected_balls - shrunk_balls, reference)
 
     band_z = {}
-    high_n = weighted_count(legal.loc[legal["band"].eq("high")], player, ids)
+    high_n = weighted_count(legal.loc[legal["band_bowl"].eq("high")], player, ids)
     for band in BANDS:
-        subset = legal.loc[legal["band"].eq(band), [player, "season", "e_bowl"]]
+        subset = legal.loc[legal["band_bowl"].eq(band), [player, "season", "e_bowl"]]
         raw = career_rate(subset, ids, player, "e_bowl")
         count = weighted_count(subset, player, ids)
         band_z[band] = zscore(shrink(raw, count, 0.0, 30), reference)
@@ -714,7 +892,7 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
     stood_share = (stood_out / passages).reindex(ids)
 
     high_spells = (
-        legal.loc[legal["band"].eq("high")]
+        legal.loc[legal["band_bowl"].eq("high")]
         .groupby(["match_id", "innings", player, "season", "match_date"], sort=False)
         .agg(balls=("charged_runs", "size"), charged=("charged_runs", "sum"))
         .reset_index()
@@ -732,7 +910,8 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
 
     qualified = spells.loc[spells["balls"].ge(6)].copy()
     form = form_by_season(qualified, player, "economy", economy, False)
-    form_score = component_frame(career_rate(form, ids, player, "form"), ids, reference)
+    form_n = qualified.groupby(player).size().reindex(ids).fillna(0.0)
+    form_score = zscore(shrink(career_rate(form, ids, player, "form"), form_n, 0.0, 8), reference)
     match_values = qualified.groupby([player, "match_id"], sort=False)["e_bowl"].mean().reset_index()
     consistency = consistency_score(match_values, player, "e_bowl", ids, reference)
 
