@@ -1,8 +1,8 @@
 const STEPS = [
   {
     title: "What is rated",
-    body: `<p>The source files are not edited. Cleaning writes a silver copy. Ratings read that copy and score legal balls only. A legal ball is not a wide, a no-ball, or a super over. Innings 3 and later are super overs and are dropped. About 192,675 legal balls remain from 200,999 deliveries.</p>
-    <p>A bowler wicket is caught, bowled, LBW, stumped, or hit wicket. A run-out dismisses the batter and does not credit the bowler. Bye and leg-bye amounts are not in the file. <span class="formula">charged runs = 0</span> on a bye, leg-bye, or penalty, and otherwise the bat runs. On this file those two differ on one ball, by one run.</p>`,
+    body: `<p>The source files are not edited. Cleaning writes a silver copy. Ratings read that copy and score legal balls only. A legal ball is not a wide, a no-ball, an other-type extra, or a super over. An other-type extra is re-bowled like a no-ball; counting it as legal would push 150 innings past 120 legal balls. Innings 3 and later are super overs and are dropped. About 192,412 legal balls remain from 200,999 deliveries.</p>
+    <p>A bowler wicket is caught, bowled, LBW, stumped, or hit wicket. A run-out dismisses the batter and does not credit the bowler. Every extra now carries its run amount, so team totals include wides, no-balls, byes, and leg-byes. A bowler is charged the bat runs, every run off a wide, and the one run of a no-ball. <span class="formula">charged runs = 0</span> on a bye, leg-bye, or penalty, and byes run off a no-ball are not charged either.</p>`,
   },
   {
     title: "Phase, chase, and ladders",

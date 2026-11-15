@@ -161,12 +161,19 @@ def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Tag every non-super-over ball. Ratings use the legal rows."""
     work = balls.loc[~balls["is_super_over"].astype(bool)].copy()
     work["bat_runs"] = work["runs"].fillna(0.0)
-    work["extra_runs"] = work["extras_2_runs"].fillna(0.0)
+    first_extra = work["extras1_runs"].fillna(0.0)
+    second_extra = work["extras_2_runs"].fillna(0.0)
+    work["extra_runs"] = first_extra + second_extra
     work["team_run"] = work["bat_runs"] + work["extra_runs"]
     label = work["extras_label"].fillna("ordinary")
-    charged = label.isin(["wide", "no-ball", "other"])
+    # Every run off a wide is the bowler's. Off a no-ball only the no-ball run and bat runs are; byes run off it are not.
+    bowler_extra = np.select(
+        [label.eq("wide"), label.isin(["no-ball", "other"])],
+        [first_extra + second_extra, first_extra],
+        0.0,
+    )
     free = label.isin(["bye", "leg-bye", "penalty"])
-    work["conceded"] = np.where(free, 0.0, work["bat_runs"] + np.where(charged, work["extra_runs"], 0.0))
+    work["conceded"] = np.where(free, 0.0, work["bat_runs"] + bowler_extra)
     work["is_legal"] = work["is_legal"].astype(bool)
     work["wicket_flag"] = work["is_wicket"].fillna(False).astype(bool).astype(int)
     work = work.sort_values(["match_id", "innings", "innings_ball_num"], kind="mergesort")
@@ -204,8 +211,7 @@ def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     legal = _attach_pressure(legal)
     legal["striker_out"] = legal["wicket_flag"].eq(1) & legal["dismissed_player_id"].eq(legal["striker_id"])
     legal["bowler_wicket"] = legal["is_bowler_wicket"].fillna(False).astype(bool)
-    bye = legal["extras_label"].isin(["bye", "leg-bye", "penalty"])
-    legal["charged_runs"] = np.where(bye, 0.0, legal["bat_runs"])
+    legal["charged_runs"] = legal["conceded"]
     legal["match_date"] = pd.to_datetime(legal["match_date"])
     work["match_date"] = pd.to_datetime(work["match_date"])
     return work, legal
@@ -1266,10 +1272,10 @@ def write_deck_exports(balls: pd.DataFrame, work: pd.DataFrame, legal: pd.DataFr
     raw = int(len(balls))
     super_overs = int(balls["is_super_over"].astype(bool).sum())
     kept = balls.loc[~balls["is_super_over"].astype(bool)]
-    wides_noballs = int(kept["extras_label"].isin(["wide", "no-ball"]).sum())
+    wides_noballs = int((~kept["is_legal"].astype(bool)).sum())
     legal_used = int((~balls["is_super_over"].astype(bool) & balls["is_legal"].astype(bool)).sum())
     pd.DataFrame({
-        "stage": ["raw_deliveries", "super_overs_dropped", "wides_noballs_excluded", "legal_balls_used"],
+        "stage": ["raw_deliveries", "super_overs_dropped", "wides_noballs_other_excluded", "legal_balls_used"],
         "count": [raw, super_overs, wides_noballs, legal_used],
     }).to_csv(out / "01_cleaning_funnel.csv", index=False)
 
