@@ -1,0 +1,21 @@
+skill,ranking,top_k,top,middle,lower,names,status,pace,spin
+batter,current_with_role_split,10,3.0,4.0,3.0,Rilee Rossouw; Tim David; Mahendra Singh Dhoni; George Linde; Ashutosh Sharma; Tom Banton; Vaibhav Sooryavanshi; Donovan Ferreira; Muhammad Waseem; Bevon Jacobs,COMPUTED,,
+batter,current_with_role_split,20,6.0,7.0,7.0,Rilee Rossouw; Tim David; Mahendra Singh Dhoni; George Linde; Ashutosh Sharma; Tom Banton; Vaibhav Sooryavanshi; Donovan Ferreira; Muhammad Waseem; Bevon Jacobs; Dinesh Karthik; Andre Russell; Rajat Patidar; Cameron Green; Yashasvi Jaiswal; Rashid Khan; Mukul Choudhary; Patrick Cummins; Finn Allen; Prabhsimran Singh,COMPUTED,,
+batter,current_with_role_split,50,18.0,22.0,10.0,,COMPUTED,,
+batter,current_with_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
+batter,current_without_role_split,10,7.0,3.0,0.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Yashasvi Jaiswal; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Nicholas Pooran,COMPUTED,,
+batter,current_without_role_split,20,13.0,6.0,1.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Yashasvi Jaiswal; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Nicholas Pooran; Prabhsimran Singh; Tom Banton; Cameron Green; Naman Dhir; Rajat Patidar; Phil Salt; Sai Sudharsan; Ashutosh Sharma; Virat Kohli; Travis Head,COMPUTED,,
+batter,current_without_role_split,50,27.0,19.0,4.0,,COMPUTED,,
+batter,current_without_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
+batter,legacy_8term_with_role_split,10,3.0,3.0,4.0,Rilee Rossouw; Mahendra Singh Dhoni; Tim David; George Linde; Ashutosh Sharma; Vaibhav Sooryavanshi; Donovan Ferreira; Dinesh Karthik; Muhammad Waseem; Rashid Khan,COMPUTED,,
+batter,legacy_8term_with_role_split,20,6.0,7.0,7.0,Rilee Rossouw; Mahendra Singh Dhoni; Tim David; George Linde; Ashutosh Sharma; Vaibhav Sooryavanshi; Donovan Ferreira; Dinesh Karthik; Muhammad Waseem; Rashid Khan; Tom Banton; Andre Russell; Patrick Cummins; Cameron Green; Bevon Jacobs; Finn Allen; Yashasvi Jaiswal; Nicholas Pooran; Rajat Patidar; Mohammad Nawaz,COMPUTED,,
+batter,legacy_8term_with_role_split,50,16.0,21.0,13.0,,COMPUTED,,
+batter,legacy_8term_with_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
+batter,legacy_8term_without_role_split,10,7.0,3.0,0.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Nicholas Pooran; Yashasvi Jaiswal,COMPUTED,,
+batter,legacy_8term_without_role_split,20,12.0,5.0,3.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Nicholas Pooran; Yashasvi Jaiswal; Naman Dhir; Cameron Green; Mahendra Singh Dhoni; Tom Banton; Prabhsimran Singh; George Linde; Ashutosh Sharma; Phil Salt; Travis Head; Jos Buttler,COMPUTED,,
+batter,legacy_8term_without_role_split,50,25.0,19.0,6.0,,COMPUTED,,
+batter,legacy_8term_without_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
+bowler,current,10,,,,,COMPUTED,5.0,5.0
+bowler,current,20,,,,,COMPUTED,11.0,9.0
+bowler,current,50,,,,,COMPUTED,29.0,21.0
+bowler,current,all (226),,,,,COMPUTED,148.0,78.0

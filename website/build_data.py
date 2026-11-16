@@ -16,8 +16,8 @@ import player_ratings as ratings
 DB = ROOT / "data" / "ratings.db"
 RATINGS = ROOT.parent / "ratings"
 
-BATTER_GAPS = ["sr_gap", "average_gap", "zero_rate", "medium_rate", "high_rate", "peer_pre", "clutch_pre", "form_pre", "consistency_pre"]
-BOWLER_GAPS = ["economy_gap", "balls_gap", "zero_rate", "medium_rate", "high_rate", "peer_pre", "clutch_pre", "form_pre", "consistency_pre"]
+BATTER_GAPS = ["sr_gap", "average_gap", "zero_rate", "medium_rate", "high_rate", "peer_pre", "clutch_pre", "consistency_pre"]
+BOWLER_GAPS = ["economy_gap", "balls_gap", "zero_rate", "medium_rate", "high_rate", "peer_pre", "clutch_pre", "consistency_pre"]
 BALL_COLUMNS = [
     "match_id", "match_date", "season", "comp_name", "stage", "innings", "n", "phase",
     "striker_id", "striker_name", "bowler_id", "bowler_name", "batting_order", "pace_or_spin",
@@ -102,8 +102,6 @@ def main() -> None:
     _dates(bowler_trace["spells"]).to_sql("bowler_spells", connection, index=False)
     _dates(batter_trace["clutch"]).to_sql("batter_clutch", connection, index=False)
     _dates(bowler_trace["clutch"]).to_sql("bowler_clutch", connection, index=False)
-    _dates(batter_trace["form"]).to_sql("batter_form", connection, index=False)
-    _dates(bowler_trace["form"]).to_sql("bowler_form", connection, index=False)
     batter_trace["phases"].to_sql("batter_phases", connection, index=False)
     bowler_trace["phases"].to_sql("bowler_phases", connection, index=False)
     deliveries.to_sql("balls", connection, index=False, chunksize=20000)

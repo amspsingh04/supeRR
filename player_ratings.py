@@ -16,16 +16,14 @@ W_SUM = float(sum(WEIGHT.values()))
 BANDS = ["zero", "medium", "high"]
 # Filled by score_batters and score_bowlers for the explanation site. The rating tables themselves are unchanged.
 TRACES: dict = {}
-# The eight shares 0.15, 0.10, 0.15, 0.20, 0.15, 0.10, 0.05, 0.05 summed to 0.95.
-# The missing 0.05 is added to baseline, the player's usual rates.
+# Seven shares summing to 1.00.
 BASELINE_WEIGHT = 0.20
 ZERO_WEIGHT = 0.10
 MEDIUM_WEIGHT = 0.15
 HIGH_WEIGHT = 0.20
 CLUTCH_WEIGHT = 0.15
 PEERS_WEIGHT = 0.10
-FORM_WEIGHT = 0.05
-CONSISTENCY_WEIGHT = 0.05
+CONSISTENCY_WEIGHT = 0.10
 # A new player stays near 1500 until they have this many legal balls.
 COLD_BALLS = 30.0
 VENUE_BALLS = 2400.0
@@ -738,38 +736,6 @@ def passage_label(row: pd.Series, career_metric: float, higher_better: bool) -> 
     return "below the side"
 
 
-def form_by_season(events: pd.DataFrame, player_col: str, metric: str, career: pd.Series, higher_better: bool) -> pd.DataFrame:
-    rows = []
-    for player, frame in events.groupby(player_col, sort=False):
-        frame = frame.sort_values(["match_date", "match_id"], kind="mergesort")
-        history: list[float] = []
-        bar = float(career.loc[player])
-        for record in frame.itertuples(index=False):
-            metric_value = float(getattr(record, metric))
-            if not history:
-                score = 0.0
-            else:
-                window = history[-8:]
-                if higher_better:
-                    score = float(np.mean([value > bar for value in window])) - 0.5
-                else:
-                    score = float(np.mean([value < bar for value in window])) - 0.5
-            history.append(metric_value)
-            rows.append({
-                player_col: player,
-                "season": int(record.season),
-                "match_id": int(record.match_id),
-                "match_date": record.match_date,
-                "metric": metric_value,
-                "career_bar": bar,
-                "form": score,
-                "level_weight": float(getattr(record, "level_weight", 1.0)),
-            })
-    if not rows:
-        return pd.DataFrame(columns=[player_col, "season", "match_id", "match_date", "metric", "career_bar", "form"])
-    return pd.DataFrame(rows)
-
-
 def consistency_parts(match_values: pd.DataFrame, player_col: str, value_col: str, players: pd.Index, reference: pd.Series, groups: pd.Series | None = None) -> pd.DataFrame:
     """The match spread that enters the consistency z-score, before that z-score is taken."""
     if "level_weight" in match_values.columns:
@@ -917,10 +883,6 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
     clutch = zscore_within(clutch_pre, roles, reference)
 
     qualified = innings.loc[innings["balls"].ge(6)].copy()
-    form = form_by_season(qualified, player, "sr", strike_rate, True)
-    form_n = form.groupby(player)["level_weight"].sum().reindex(ids).fillna(0.0) if len(form) else pd.Series(0.0, index=ids)
-    form_pre = shrink(career_rate(form, ids, player, "form"), form_n, 0.0, 8)
-    form_score = zscore_within(form_pre, roles, reference)
     match_values = qualified.groupby([player, "match_id"], sort=False).agg(e_bat=("e_bat", "mean"), level_weight=("level_weight", "max")).reset_index()
     match_values = match_values.merge(
         qualified.groupby([player, "match_id"], sort=False)["match_date"].min().reset_index(),
@@ -937,7 +899,6 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
         + HIGH_WEIGHT * band_z["high"]
         + CLUTCH_WEIGHT * clutch
         + PEERS_WEIGHT * peer
-        + FORM_WEIGHT * form_score
         + CONSISTENCY_WEIGHT * consistency
     )
     ranked = n_eff.ge(120) & high_n.ge(30)
@@ -957,7 +918,6 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
         "band_high": band_z["high"].to_numpy(),
         "clutch": clutch.to_numpy(),
         "peers": peer.to_numpy(),
-        "form": form_score.to_numpy(),
         "consistency": consistency.to_numpy(),
         "stood_out_share": stood_share.to_numpy(),
         "composite": composite.to_numpy(),
@@ -996,8 +956,6 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
         "clutch_pre": clutch_pre.reindex(ids).to_numpy(),
         "clutch_n": clutch_n.reindex(ids).fillna(0).to_numpy(),
         "clutch_scale": scale,
-        "form_pre": form_pre.reindex(ids).to_numpy(),
-        "form_n": form_n.reindex(ids).to_numpy(),
         "consistency_matches": consistency_detail["matches"].reindex(ids).to_numpy(),
         "consistency_spread": consistency_detail["spread"].reindex(ids).to_numpy(),
         "consistency_typical": consistency_detail["typical"].reindex(ids).to_numpy(),
@@ -1008,7 +966,6 @@ def score_batters(legal: pd.DataFrame) -> pd.DataFrame:
         "math": math,
         "spells": compared,
         "clutch": clutch_rows,
-        "form": form,
         "phases": phase_player,
     }
     return table.sort_values(["ranked", "rank", "player_name"], ascending=[False, True, True]).reset_index(drop=True)
@@ -1123,10 +1080,6 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
     clutch = component_frame(clutch_pre, ids, reference)
 
     qualified = spells.loc[spells["balls"].ge(6)].copy()
-    form = form_by_season(qualified, player, "economy", economy, False)
-    form_n = form.groupby(player)["level_weight"].sum().reindex(ids).fillna(0.0) if len(form) else pd.Series(0.0, index=ids)
-    form_pre = shrink(career_rate(form, ids, player, "form"), form_n, 0.0, 8)
-    form_score = zscore(form_pre, reference)
     match_values = qualified.groupby([player, "match_id"], sort=False).agg(e_bowl=("e_bowl", "mean"), level_weight=("level_weight", "max")).reset_index()
     match_values = match_values.merge(
         qualified.groupby([player, "match_id"], sort=False)["match_date"].min().reset_index(),
@@ -1143,7 +1096,6 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
         + HIGH_WEIGHT * band_z["high"]
         + CLUTCH_WEIGHT * clutch
         + PEERS_WEIGHT * peer
-        + FORM_WEIGHT * form_score
         + CONSISTENCY_WEIGHT * consistency
     )
     ranked = n_eff.ge(120) & high_n.ge(30)
@@ -1163,7 +1115,6 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
         "band_high": band_z["high"].to_numpy(),
         "clutch": clutch.to_numpy(),
         "peers": peer.to_numpy(),
-        "form": form_score.to_numpy(),
         "consistency": consistency.to_numpy(),
         "stood_out_share": stood_share.to_numpy(),
         "composite": composite.to_numpy(),
@@ -1202,8 +1153,6 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
         "clutch_pre": clutch_pre.reindex(ids).to_numpy(),
         "clutch_n": clutch_n.reindex(ids).fillna(0).to_numpy(),
         "clutch_scale": scale,
-        "form_pre": form_pre.reindex(ids).to_numpy(),
-        "form_n": form_n.reindex(ids).to_numpy(),
         "consistency_matches": consistency_detail["matches"].reindex(ids).to_numpy(),
         "consistency_spread": consistency_detail["spread"].reindex(ids).to_numpy(),
         "consistency_typical": consistency_detail["typical"].reindex(ids).to_numpy(),
@@ -1214,7 +1163,6 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
         "math": math,
         "spells": compared,
         "clutch": clutch_rows,
-        "form": form,
         "phases": phase_player,
     }
     return table.sort_values(["ranked", "rank", "player_name"], ascending=[False, True, True]).reset_index(drop=True)
@@ -1251,7 +1199,6 @@ def _pooled_batter_order(batters: pd.DataFrame) -> pd.DataFrame:
         + HIGH_WEIGHT * band_piece("high_rate", "high_balls")
         + CLUTCH_WEIGHT * zscore(math["clutch_pre"], reference)
         + PEERS_WEIGHT * zscore(math["peer_pre"], reference)
-        + FORM_WEIGHT * zscore(math["form_pre"], reference)
         + CONSISTENCY_WEIGHT * zscore(math["consistency_pre"], reference)
     )
     floor = batters.set_index("player_id")
@@ -1412,8 +1359,8 @@ def write_deck_exports(balls: pd.DataFrame, work: pd.DataFrame, legal: pd.DataFr
     wicket_bins.to_csv(out / "14b_calibration_wicket_bins.csv", index=False)
 
     pd.DataFrame({
-        "component": ["baseline", "zero", "medium", "high", "clutch", "peers", "form", "consistency"],
-        "weight": [BASELINE_WEIGHT, ZERO_WEIGHT, MEDIUM_WEIGHT, HIGH_WEIGHT, CLUTCH_WEIGHT, PEERS_WEIGHT, FORM_WEIGHT, CONSISTENCY_WEIGHT],
+        "component": ["baseline", "zero", "medium", "high", "clutch", "peers", "consistency"],
+        "weight": [BASELINE_WEIGHT, ZERO_WEIGHT, MEDIUM_WEIGHT, HIGH_WEIGHT, CLUTCH_WEIGHT, PEERS_WEIGHT, CONSISTENCY_WEIGHT],
     }).to_csv(out / "15_component_weights.csv", index=False)
 
     scatter = pd.concat([
@@ -1450,7 +1397,7 @@ def write_deck_exports(balls: pd.DataFrame, work: pd.DataFrame, legal: pd.DataFr
 
     weights = {
         "baseline": BASELINE_WEIGHT, "zero": ZERO_WEIGHT, "medium": MEDIUM_WEIGHT, "high": HIGH_WEIGHT,
-        "clutch": CLUTCH_WEIGHT, "peers": PEERS_WEIGHT, "form": FORM_WEIGHT, "consistency": CONSISTENCY_WEIGHT,
+        "clutch": CLUTCH_WEIGHT, "peers": PEERS_WEIGHT, "consistency": CONSISTENCY_WEIGHT,
     }
     source = {"zero": "band_zero", "medium": "band_medium", "high": "band_high"}
 

@@ -1,0 +1,9 @@
+dismissal_type,count_all,count_super_over,count_used_non_super_over,on_illegal_delivery,on_legal_ball,striker_dismissed_on_legal_ball,non_striker_dismissed_on_legal_ball,is_bowler_wicket,penalises_batter_ball_value_and_elo,credits_bowler_ball_value_and_elo,credits_bowler_baseline_wickets,counts_in_count_shock,counts_in_xwicket_training,status
+Caught,7557,8,7549,0,7549,7549,0,True,yes when the striker is out,True,True,True,True,COMPUTED
+Bowled,1775,3,1772,0,1772,1772,0,True,yes when the striker is out,True,True,True,True,COMPUTED
+LBW,709,0,709,0,709,709,0,True,yes when the striker is out,True,True,True,True,COMPUTED
+RunOut,600,2,598,23,575,314,261,False,yes when the striker is out,False,False,True,False,COMPUTED
+Stump,214,0,214,25,189,189,0,True,yes when the striker is out,True,True,True,True,COMPUTED
+Hit Wicket,17,0,17,0,17,17,0,True,yes when the striker is out,True,True,True,True,COMPUTED
+Retire Out,6,0,6,0,6,3,3,False,yes when the striker is out,False,False,False,False,COMPUTED
+Obstructing the field,3,0,3,0,3,2,1,False,yes when the striker is out,False,False,False,False,COMPUTED

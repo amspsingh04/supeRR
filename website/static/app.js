@@ -13,7 +13,7 @@ const STEPS = [
   },
   {
     title: "Pressure, which only chooses the band",
-    body: `<p>Pressure is not a ninth weight in the ranking. It decides whether a ball is zero, medium, or high.</p>
+    body: `<p>Pressure is not an eighth weight in the ranking. It decides whether a ball is zero, medium, or high.</p>
     <p class="formula">pressure = occasion × competition × ball difficulty + shock + run of play</p>
     <p>Occasion is 3 for a final, 2 for a semi-final, 1.5 for a qualifier or eliminator, 1.3 for Super 4, 1 for a league match, 0.8 for other bilateral matches, and 0.4 once a bilateral series is already won. Competition is 0.7 for Other T20 and for events whose name contains Emerging or Rising, otherwise 1.</p>
     <p>Ball difficulty is capped from 0 to 1. For a batter the phase term is 0.25, 0.10, and 0.40 for powerplay, middle, and death. Wickets already down add 0, 0.15, or 0.30. A required rate of at least 8 adds 0.15, and at least 12 adds 0.30. For a bowler the phase term is 0.32, 0.24, and 0.32 at the death against a batter listed 1 to 7, otherwise 0.14 at the death. Wickets down subtract 0, 0.10, or 0.25. The current ball is never included in the shock or the run of play.</p>`,
@@ -40,16 +40,16 @@ const STEPS = [
     <p>The bowler’s rating moves with charged runs, the same quantity as the bowler ball value. The step sizes are 4 for a run, 16 for a wicket, and 20 for a team result. If the ratings spread past the allowed edges, those steps are halved once and the walk is repeated.</p>`,
   },
   {
-    title: "The eight scores",
+    title: "The seven scores",
     body: `<p>A season weight is 0.9 to the power of how many years it sits before 2026. A career rate is the decay-weighted mean of the rows the player actually has. A season with no rows is left out. It is not written as zero, and it is not divided by 4.0951.</p>
     <p>Every published component is then a z-score: value minus the reference mean, divided by the reference population spread, capped at −3 and 3. For batters that reference is other players in the same role with at least 30 decay-weighted legal balls. Top order is batting positions 1 to 3, middle is 4 to 6, and lower is 7 and below. For bowlers the reference is all bowlers with at least 30 decay-weighted legal balls.</p>
     <p>Baseline is half the z-score of the phase-adjusted strike rate and half the phase-adjusted average for a batter. For a bowler it is half the economy gap and half the balls-per-wicket gap, with the sign flipped so lower is better. Strike rate and economy shrink toward the phase expectation with 120 balls. Average and balls per wicket shrink with 4 dismissals or wickets.</p>
-    <p>Each band score is the ball value inside that band, as a decay-weighted mean, shrunk toward 0 with 30 balls. Peers compare an innings of at least 6 balls with teammates and with the other side. Both z-scores are capped at 3. Clutch does that only in the high band, and a spell below the player’s own rate stays negative. Form looks at up to eight earlier innings against the career rate and is shrunk toward 0 with 8 innings. Consistency prefers a narrower spread of match values, shrunk toward the typical spread with 8 matches.</p>`,
+    <p>Each band score is the ball value inside that band, as a decay-weighted mean, shrunk toward 0 with 30 balls. Peers compare an innings of at least 6 balls with teammates and with the other side. Both z-scores are capped at 3. Clutch does that only in the high band, and a spell below the player’s own rate stays negative. Consistency prefers a narrower spread of match values, shrunk toward the typical spread with 8 matches.</p>`,
   },
   {
     title: "The rank",
-    body: `<p class="formula">composite = 0.20 baseline + 0.10 zero + 0.15 medium + 0.20 high + 0.15 clutch + 0.10 peers + 0.05 form + 0.05 consistency</p>
-    <p>The eight weights sum to 1. The original shares summed to 0.95, and the missing 0.05 was added to the baseline. A player is ranked with at least 120 decay-weighted legal balls and at least 30 of those in the high band. Rank 1 is the highest composite. A tie goes to the smaller player id.</p>
+    body: `<p class="formula">composite = 0.20 baseline + 0.10 zero + 0.15 medium + 0.20 high + 0.15 clutch + 0.10 peers + 0.10 consistency</p>
+    <p>The seven weights sum to 1. A player is ranked with at least 120 decay-weighted legal balls and at least 30 of those in the high band. Rank 1 is the highest composite. A tie goes to the smaller player id.</p>
     <p>Open a player from the rankings to see each weight times each z-score, the rank of that component, and the innings and balls underneath it.</p>`,
   },
 ];
@@ -64,7 +64,6 @@ const COLUMNS = {
     ["band_high", "High"],
     ["clutch", "Clutch"],
     ["peers", "Peers"],
-    ["form", "Form"],
     ["consistency", "Consistency"],
     ["runs", "Runs"],
     ["strike_rate", "Strike rate"],
@@ -80,7 +79,6 @@ const COLUMNS = {
     ["band_high", "High"],
     ["clutch", "Clutch"],
     ["peers", "Peers"],
-    ["form", "Form"],
     ["consistency", "Consistency"],
     ["wickets", "Wickets"],
     ["economy", "Economy"],
@@ -96,8 +94,7 @@ const PIECES = [
   ["band_high", "High pressure", 0.20],
   ["clutch", "Clutch", 0.15],
   ["peers", "Same innings", 0.10],
-  ["form", "Recent form", 0.05],
-  ["consistency", "Consistency", 0.05],
+  ["consistency", "Consistency", 0.10],
 ];
 
 const state = {
@@ -186,9 +183,6 @@ function story(player, skill, phases) {
     peers: skill === "batters"
       ? `In the same innings he pulls away from his own side and stands up to the other batting side.${stood}`
       : `In the same innings his spell is the one that stands out in the attack.${stood}`,
-    form: Number(player.form) >= 0
-      ? "The last few innings have run ahead of his career rate."
-      : "The last few innings have been quieter than the career. The rank is not coming from a hot streak.",
     consistency: "From match to match the return does not swing from a blitz to a trudge.",
   };
   lines.push(leadLine[lead.key]);
@@ -249,6 +243,86 @@ function portrait(row, skill, phases) {
   return `<article class="portrait"><div class="num">${String(row.rank).padStart(2, "0")}</div><div><h3>${row.player_name}</h3><p class="meta">${skill === "batters" ? "Batter" : "Bowler"} · published score ${num(row.composite, 3)}</p>${lines.map((line) => `<p>${line}</p>`).join("")}<div class="chips">${chips.map((chip) => `<span>${chip}</span>`).join("")}</div></div></article>`;
 }
 
+const METRICS = {
+  baseline: {
+    short: "Plain skill, before pressure is considered.",
+    batter: "Strike rate and average, each set against what his mix of powerplay, middle, and death overs usually yields. Half of each.",
+    bowler: "Economy and balls per wicket, each set against what that phase and pace or spin usually concede. Half of each, lower is better.",
+    detail: "Rates are pulled toward the expectation until there are 120 balls, or 4 dismissals for the average.",
+  },
+  band_zero: {
+    short: "Value added on the quiet half of balls.",
+    batter: "Runs above expectation, less the cost of getting out, when nothing much is riding on the ball.",
+    bowler: "Runs saved and wickets above expectation in the same easy situations.",
+    detail: "Bottom 50 percent of pressure. Pulled toward 0 until 30 balls.",
+  },
+  band_medium: {
+    short: "Value added when the game starts to tighten.",
+    batter: "The same ball value, on balls where the asking rate or the wickets begin to bite.",
+    bowler: "The same ball value, when the batting side has started to chase the game.",
+    detail: "The 50th to 80th percentile of pressure. Pulled toward 0 until 30 balls.",
+  },
+  band_high: {
+    short: "Value added in the tightest fifth of balls.",
+    batter: "Death overs, a steep chase, wickets down, a knockout: does he still beat what the ball usually gives?",
+    bowler: "The same squeeze from the other end. The cut is made inside pace and inside spin separately.",
+    detail: "Top 20 percent of pressure. Pulled toward 0 until 30 balls.",
+  },
+  clutch: {
+    short: "Stood up when teammates did not.",
+    batter: "In a high-pressure spell of 6 balls or more, did he beat his own usual rate while the rest of the order fell short?",
+    bowler: "In a high-pressure spell, did he hold up while the other bowlers went for runs?",
+    detail: "A spell worse than his own rate counts against him. Beating it counts more when teammates struggled more.",
+  },
+  peers: {
+    short: "Better than everyone else in the same match.",
+    batter: "Each innings of 6 balls or more set against teammates and the opposition batters on the same pitch, same day.",
+    bowler: "Each spell set against teammates and the opposition bowlers in the same game.",
+    detail: "Both comparisons capped at 3 z. Pulled toward 0 until 5 innings.",
+  },
+  consistency: {
+    short: "Reliable rather than all-or-nothing.",
+    batter: "A narrower spread of match-by-match value scores higher than big swings between huge and nothing.",
+    bowler: "The same spread, for match-by-match bowling value.",
+    detail: "Spread is pulled toward the usual spread until 8 matches.",
+  },
+};
+
+function metricsGuide() {
+  const terms = PIECES.map(([, label, weight]) => `${weight.toFixed(2)} × ${label}`).join(" + ");
+  const cards = PIECES.map(([key, label, weight]) => {
+    const item = METRICS[key];
+    return `<article class="metric-card">
+      <header><h3>${label}</h3><span class="metric-weight">${weight.toFixed(2)}</span></header>
+      <p class="metric-short">${item.short}</p>
+      <p><b>Batter</b> ${item.batter}</p>
+      <p><b>Bowler</b> ${item.bowler}</p>
+      <p class="metric-detail">${item.detail}</p>
+    </article>`;
+  }).join("");
+  return `<section class="metrics">
+    <div class="metrics-head">
+      <div>
+        <h2>What the score measures</h2>
+        <p>Every legal ball gets a value: what the batter or bowler did against what that ball usually yields. Each ball also gets a pressure score, which decides whether it is a quiet ball, a squeeze, or high pressure. Seven measures are built from those values. Each is turned into a z-score against comparable players, capped at 3 either way, and the published score is their weighted sum.</p>
+      </div>
+      <div class="formula-block metrics-formula"><p>The published score</p><code>score = ${terms}</code><small>Weights sum to 1.00. Each measure is a z-score: 0 is an ordinary player, +1 is one spread above.</small></div>
+    </div>
+    <div class="metric-grid">${cards}<article class="metric-card metric-read">
+      <header><h3>Reading a score</h3></header>
+      <p class="metric-short">0 is an ordinary player in the comparison group.</p>
+      <p>Each measure sits between −3 and +3. A +1 means one spread better than the group, roughly the top sixth.</p>
+      <p>Because the weights sum to 1, the published score reads on the same scale. A score near +1 across the board is a very good T20 cricketer.</p>
+      <p class="metric-detail">Hover a name in the top 10 to see his seven bars.</p>
+    </article></div>
+    <div class="metric-basis">
+      <div><h4>Ball value</h4><code>batter = (bat runs − expected runs) − 4 × (out − expected wicket chance)</code><code>bowler = (expected runs − runs charged) + 4 × (wicket − expected wicket chance)</code><p>Expected runs and wicket chance come only from balls already bowled in that phase, pace or spin, and level, adjusted for the batter, bowler, teams, and ground.</p></div>
+      <div><h4>Pressure</h4><code>pressure = occasion × competition × ball difficulty + shock + run of play</code><p>Occasion runs from a dead rubber up to a final. Ball difficulty adds the phase, wickets down, and the asking rate. Shock and run of play read the last six and eighteen balls, never the current one.</p></div>
+      <div><h4>Who is compared and who is ranked</h4><p>Batters are compared within top, middle, or lower order. Bowlers are compared with all bowlers. Seasons fade by 0.9 a year back from 2026, and Emerging and Rising Stars balls count half. To be ranked a player needs 120 weighted legal balls, 30 of them high pressure.</p></div>
+    </div>
+  </section>`;
+}
+
 async function board() {
   const pool = await loadPool();
   const why = {};
@@ -258,7 +332,7 @@ async function board() {
       const width = Math.min(Math.abs(z), 3) / 3 * 50;
       return `<li><span>${label}</span><i><em class="${z < 0 ? "neg" : "pos"}" style="width:${width}%;${z < 0 ? `right:50%` : `left:50%`}"></em></i><b>${z >= 0 ? "+" : ""}${num(z, 2)}</b></li>`;
     }).join("");
-    return `<p class="why-name">${row.player_name}</p><p class="why-meta">${skill === "batters" ? "Batter" : "Bowler"} · rank ${row.rank} · score ${num(row.composite, 3)}</p>${story(row, skill).map((line) => `<p>${line}</p>`).join("")}<p class="why-sub">The eight pieces, against peers</p><ul class="why-bars">${bars}</ul>`;
+    return `<p class="why-name">${row.player_name}</p><p class="why-meta">${skill === "batters" ? "Batter" : "Bowler"} · rank ${row.rank} · score ${num(row.composite, 3)}</p>${story(row, skill).map((line) => `<p>${line}</p>`).join("")}<p class="why-sub">The seven pieces, against peers</p><ul class="why-bars">${bars}</ul>`;
   };
   pool.batters.slice(0, 10).forEach((row) => { why[`batters-${row.player_id}`] = whyNote(row, "batters"); });
   pool.bowlers.slice(0, 10).forEach((row) => { why[`bowlers-${row.player_id}`] = whyNote(row, "bowlers"); });
@@ -282,7 +356,7 @@ async function board() {
     <section class="sandbox">
       <div class="play-explain">
         <h2>A score you can retune</h2>
-        <p>The published score adds eight pieces of a player’s cricket. Switch a piece off or move its weight. The short lists change in the browser. The top 10 above stays the published order, and nothing you move is saved.</p>
+        <p>The published score adds seven pieces of a player’s cricket. Switch a piece off or move its weight. The short lists change in the browser. The top 10 above stays the published order, and nothing you move is saved.</p>
       </div>
       <div class="play-box">
         <div class="formula-block"><p>Play with the formula</p><code id="formula-line">${formulaText()}</code></div>
@@ -294,7 +368,8 @@ async function board() {
           <div class="live-lists">${miniList("Batters", pool.batters)}${miniList("Bowlers", pool.bowlers)}</div>
         </div>
       </div>
-    </section>`;
+    </section>
+    ${metricsGuide()}`;
   const paintLive = () => {
     const line = document.querySelector("#formula-line");
     if (line) line.textContent = formulaText();
@@ -379,7 +454,7 @@ async function rankings() {
     <div class="table-wrap"><table>
       <thead><tr>${columns.map(([key, label]) => `<th class="${key === "player_name" ? "name" : ""}" data-sort="${key}">${label}${state.sort === key ? (state.dir === "asc" ? " ↑" : " ↓") : ""}</th>`).join("")}</tr></thead>
       <tbody>${data.rows.map((row) => `<tr class="clickable" data-id="${row.player_id}">
-        ${columns.map(([key]) => `<td class="${key === "player_name" ? "name" : ""} ${["composite", "baseline", "band_high", "clutch", "peers", "form", "consistency"].includes(key) ? cls(row[key]) : ""}">${key === "player_name" || key === "role" ? row[key] : key === "rank" ? (row.rank ?? "—") : num(row[key], key === "runs" || key === "wickets" ? 0 : 3)}</td>`).join("")}
+        ${columns.map(([key]) => `<td class="${key === "player_name" ? "name" : ""} ${["composite", "baseline", "band_high", "clutch", "peers", "consistency"].includes(key) ? cls(row[key]) : ""}">${key === "player_name" || key === "role" ? row[key] : key === "rank" ? (row.rank ?? "—") : num(row[key], key === "runs" || key === "wickets" ? 0 : 3)}</td>`).join("")}
       </tr>`).join("")}</tbody>
     </table></div>
     <p class="note">${data.count} players. Click a row to see how that composite was built. Click a column heading to sort.</p>`;
@@ -429,17 +504,6 @@ function clutchTable(rows) {
       <td class="name">${spell.match_date}</td><td>${spell.innings}</td><td>${num(spell.balls, 0)}</td>
       <td>${num(spell.metric, 2)}</td><td class="${cls(spell.own_gap)}">${num(spell.own_gap)}</td>
       <td class="${cls(spell.z_team)}">${num(spell.z_team)}</td><td class="${cls(spell.clutch)}">${num(spell.clutch)}</td>
-    </tr>`).join("")}</tbody></table></div>`;
-}
-
-function formTable(skill, rows) {
-  if (!rows.length) return "<p>No qualified innings.</p>";
-  const metric = skill === "batters" ? "Strike rate" : "Economy";
-  return `<div class="table-wrap"><table>
-    <thead><tr><th class="name">Date</th><th>Season</th><th>${metric}</th><th>Career bar</th><th>Form score</th></tr></thead>
-    <tbody>${rows.map((row) => `<tr>
-      <td class="name">${row.match_date}</td><td>${row.season}</td><td>${num(row.metric, 2)}</td>
-      <td>${num(row.career_bar, 2)}</td><td class="${cls(row.form)}">${num(row.form)}</td>
     </tr>`).join("")}</tbody></table></div>`;
 }
 
@@ -495,9 +559,7 @@ async function player() {
       <summary><strong>${part.label}</strong> · z ${num(part.z)} · weight ${num(part.weight, 2)} · contribution <span class="${cls(part.contribution)}">${num(part.contribution)}</span> · rank ${part.rank ?? "—"} of ranked${part.role_rank ? ` · ${part.role_rank} in role` : ""}</summary>
       <div class="body">${part.detail.map((line) => `<p>${line}</p>`).join("")}
         ${part.key === "peers" ? spellTable(state.skill, data.spells) : ""}
-        ${part.key === "clutch" ? clutchTable(data.clutch) : ""}
-        ${part.key === "form" ? formTable(state.skill, data.form) : ""}
-      </div>
+        ${part.key === "clutch" ? clutchTable(data.clutch) : ""}      </div>
     </details>`).join("")}
     <h3>Phases</h3>
     <div class="table-wrap"><table>
@@ -619,7 +681,7 @@ function drawnPlayer(row, skill, detail, options, innings) {
     </div>
     ${lines.map((line) => `<p class="lede">${line}</p>`).join("")}
     <h3>Each piece of the ${num(row.composite, 2)}</h3>
-    <p class="note">Bar length is the weight times the player’s score on that piece. The eight bars sum to the published score. Rank is among ranked ${skill === "batters" ? "batters" : "bowlers"}.</p>
+    <p class="note">Bar length is the weight times the player’s score on that piece. The seven bars sum to the published score. Rank is among ranked ${skill === "batters" ? "batters" : "bowlers"}.</p>
     ${componentChart(parts)}
     <div class="table-wrap"><table>
       <thead><tr><th class="name">Piece</th><th>Weight</th><th>Score</th><th>Share of the total</th><th>Rank</th></tr></thead>

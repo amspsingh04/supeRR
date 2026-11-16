@@ -1,0 +1,8 @@
+extras_label,source_extras_type,deliveries_all,deliveries_super_over,deliveries_used,is_legal,counts_as_ball_faced,bat_runs,extras1_runs,extras2_runs,runs_charged_to_bowler,in_elo_and_ball_value,in_bowler_baseline_economy,bowler_charging_rule,status
+ordinary,None,189167,32,189135,True,True,268245.0,1.0,1.0,268245.0,True,True,bat runs charged to bowler,COMPUTED
+wide,wide,7714,4,7710,False,False,0.0,9166.0,0.0,9166.0,False,True,all wide runs (extras1 + extras2) charged to bowler; ball not legal,COMPUTED
+leg-bye,legbyes,2748,1,2747,True,True,1.0,3602.0,0.0,0.0,True,True,not charged to bowler,COMPUTED
+no-ball,Overstep,576,0,576,False,False,852.0,576.0,48.0,1428.0,False,True,no-ball run (extras1) + bat runs charged; extras2 (byes off it) free; ball not legal,COMPUTED
+bye,byes,529,0,529,True,True,0.0,1000.0,0.0,0.0,True,True,not charged to bowler,COMPUTED
+other,other,264,1,263,False,False,408.0,263.0,35.0,671.0,False,True,treated like a no-ball: extras1 + bat runs charged; ball not legal,COMPUTED
+penalty,Penalty,1,0,1,True,True,0.0,5.0,0.0,0.0,True,True,not charged to bowler,COMPUTED

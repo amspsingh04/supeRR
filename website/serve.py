@@ -28,8 +28,7 @@ WEIGHTS = [
     ("band_high", "High pressure", 0.20),
     ("clutch", "Clutch", 0.15),
     ("peers", "Peers", 0.10),
-    ("form", "Form", 0.05),
-    ("consistency", "Consistency", 0.05),
+    ("consistency", "Consistency", 0.10),
 ]
 PRE = {
     "band_zero": "zero_rate",
@@ -37,7 +36,6 @@ PRE = {
     "band_high": "high_rate",
     "peers": "peer_pre",
     "clutch": "clutch_pre",
-    "form": "form_pre",
     "consistency": "consistency_pre",
 }
 
@@ -183,7 +181,6 @@ class Site:
             "phases": self._rows(f"SELECT * FROM {skill[:-1]}_phases WHERE {identity} = ? ORDER BY balls DESC", player_id),
             "spells": self._rows(f"SELECT * FROM {skill[:-1]}_spells WHERE {identity} = ? ORDER BY match_date, match_id, innings", player_id),
             "clutch": self._rows(f"SELECT * FROM {skill[:-1]}_clutch WHERE {identity} = ? ORDER BY match_date, match_id, innings", player_id),
-            "form": self._rows(f"SELECT * FROM {skill[:-1]}_form WHERE {identity} = ? ORDER BY match_date, match_id", player_id),
             "math": math_row,
         }
 
@@ -326,13 +323,6 @@ class Site:
                 f"High-band spells of at least 6 balls with a teammate z-score: { _num(math_row['clutch_n'], 0) }. The scale of a spell against the player's own rate is { _num(math_row['clutch_scale'], 2) }.",
                 "If the spell is worse than the player's own rate, the spell score is that negative gap. If it is better, the score is the gap times the positive part of the teammate z-score. A negative teammate gap adds nothing.",
                 "Those spell scores are averaged and shrunk toward 0 with strength 5, then z-scored.",
-                shared,
-            ]
-        if key == "form":
-            return [
-                f"Qualified innings: { _num(math_row['form_n'], 0) }.",
-                "Each innings scores the share of the previous innings, at most eight, that beat the full-career rate, minus 0.5. The first innings scores 0. The career bar includes later innings.",
-                "Those innings scores are decay-weighted by season. A season with no innings is left out. The result is shrunk toward 0 with strength 8 innings.",
                 shared,
             ]
         return [

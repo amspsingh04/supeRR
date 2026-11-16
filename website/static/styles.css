@@ -299,7 +299,32 @@ tr.clickable:hover { background: var(--accent-soft); }
 .positive { color: var(--accent); }
 .negative { color: var(--warn); }
 
+.metrics { margin-top: 28px; }
+.metrics-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 24px; align-items: stretch; margin-bottom: 16px; }
+.metrics-head p { margin: 0; line-height: 1.55; }
+.metrics-formula { margin: 0; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.metrics-formula p { margin: 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #c9c2b4; }
+.metrics-formula code { font-size: 14px; }
+.metrics-formula small { color: #c9c2b4; font-size: 12.5px; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.metric-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.metric-card header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.metric-card h3 { font-size: 20px; margin: 0; }
+.metric-weight { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 10px; font-size: 14px; }
+.metric-card p { margin: 0; font-size: 14px; line-height: 1.45; }
+.metric-card p b { display: block; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
+.metric-card .metric-short { font-family: Georgia, "Times New Roman", serif; font-size: 16px; }
+.metric-card .metric-detail { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+.metric-read { background: var(--accent-soft); border-color: transparent; }
+.metric-basis { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; margin-top: 12px; }
+.metric-basis > div { background: var(--rose); border-radius: 14px; padding: 16px 18px; }
+.metric-basis h4 { font-family: Georgia, "Times New Roman", serif; font-size: 18px; margin: 0 0 8px; }
+.metric-basis code { display: block; font-family: Consolas, "Courier New", monospace; font-size: 12.5px; background: rgba(255, 255, 255, 0.6); border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; white-space: pre-wrap; }
+.metric-basis p { margin: 4px 0 0; font-size: 14px; line-height: 1.45; }
+
 @media (max-width: 1380px) {
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metrics-head, .metric-basis { grid-template-columns: 1fr; }
   .board-ten { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
   .board-copy { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr 1fr 1fr; gap: 18px; align-items: start; }
   .board-copy h2 { margin: 0; }
@@ -311,7 +336,7 @@ tr.clickable:hover { background: var(--accent-soft); }
   .board-copy { display: block; }
   .board-copy p { margin: 0 0 10px; }
   .why-panel { position: static; }
-  .board-ten, .play-row, .play-main, .official, .cards, .link-row { grid-template-columns: 1fr; }
+  .board-ten, .play-row, .play-main, .official, .cards, .link-row, .metric-grid { grid-template-columns: 1fr; }
   .play-box { justify-self: stretch; }
   .portrait { grid-template-columns: 1fr; }
   .top, main { padding-left: 16px; padding-right: 16px; }

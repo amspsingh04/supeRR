@@ -1,0 +1,13 @@
+# Cricketing interpretations
+
+These readings rest on the computed numbers. Each one says which number it rests on. They describe what the model measures, and they are not claims about players beyond the data.
+
+1. **Batting 'pressure' here means batting just after a wicket.** In the high band, strike rate is 118.5 against 147.5 in the zero band, and the striker-out rate is 5.48% against 5.37%. Across all innings, strike rate is 116.3 within six balls of a wicket and 148.2 otherwise. A high-band score therefore rewards a batter who keeps scoring while the innings is being rebuilt.
+2. **Bowling 'pressure' here means bowling just after being hit.** Economy on legal balls rises from 8.34 to 9.83 for pace and from 7.29 to 8.76 for spin, from the zero band to the high band. A bowler who scores well in the high band is one who stops the bleeding after a boundary.
+3. **Spin carries most of the middle-overs pressure; pace spreads across phases.** 75.2% of spin high-band balls are in the middle overs. Pace splits 35.4% powerplay, 36.2% middle and 28.4% death.
+4. **Finishers dominate the batting top 10.** The role split is 3 top, 4 middle and 3 lower order. Lower-order ranked batters average 38.5% of their balls in the high band, against 13.9% for top-order batters. They walk in after wickets, so more of their batting is 'pressure' by construction.
+5. **The role split decides how many finishers appear.** With role-split z-scores the top 20 is [6, 7, 7] (top/middle/lower). With pooled z-scores it is [13, 6, 1]. That flip is a modelling choice, not a cricket finding.
+6. **Batting ranks rest mostly on baseline output and the high band.** Variance shares in the batter composite: baseline 30.0%, high pressure 23.7%, medium pressure 18.3%, peers 13.7%, clutch 11.0%, zero pressure 7.3%, consistency -4.1%. Consistency's share is negative, so it pulls against the other terms.
+7. **Bowling ranks lean more on pressure terms.** For bowlers the high band takes 27.8% of variance and clutch takes 19.3%. Baseline-only and full rankings share just 11 of the top 20.
+8. **Tail situations distort ball value.** Batters at 8–9 down average -0.421 runs-equivalent per ball and the bowlers facing them average 0.391. Because the model does not know wickets are down, death-over bowlers who often bowl at tails look better.
+9. **The shock timeline follows the 2025 final chase.** RCB won by 6 runs. PBKS's 7 wickets fell at legal balls 30, 51, 58, 73, 98, 100, 104. Batter pressure first reaches its peak of 5.00 on ball 99, straight after the wicket at ball 98 (over 17.2), with the next wicket at ball 100. 48 of the 120 balls are batter-high.
