@@ -2,7 +2,7 @@
 
 Nothing in the repository is written except research_readout/_cache.
 The current model is imported from player_ratings.py as it stands.
-The earlier eight-term model (with Form) is loaded read-only from git HEAD for comparison.
+The earlier eight-term model (with Form) is loaded read-only from git 29956ed for comparison.
 """
 
 from __future__ import annotations
@@ -46,10 +46,21 @@ traces = copy.deepcopy(pr.TRACES)
 pooled_current = pr._pooled_batter_order(batters)
 print("current scoring", round(time.time() - start, 1), "s")
 
-source = subprocess.check_output(["git", "show", "HEAD:player_ratings.py"], cwd=ROOT).decode("utf-8")
-head_rev = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT).decode().strip()
+# The same pipeline with super-over rows removed before tagging: the pre-change ratings, for comparison.
+no_super_work, no_super_legal = pr.add_situation(balls.loc[~balls["is_super_over"].astype(bool)])
+no_super_legal = pr.fit_elo(no_super_legal)
+no_super_batters = pr.score_batters(no_super_legal)
+no_super_bowlers = pr.score_bowlers(no_super_legal, no_super_work)
+del no_super_work, no_super_legal
+print("no-super-over scoring", round(time.time() - start, 1), "s")
+
+LEGACY_REV = "29956ed"
+source = subprocess.check_output(["git", "show", f"{LEGACY_REV}:player_ratings.py"], cwd=ROOT).decode("utf-8")
+head_rev = subprocess.check_output(["git", "rev-parse", LEGACY_REV], cwd=ROOT).decode().strip()
 legacy = types.ModuleType("legacy_player_ratings")
-exec(compile(source, "git:HEAD:player_ratings.py", "exec"), legacy.__dict__)
+exec(compile(source, f"git:{LEGACY_REV}:player_ratings.py", "exec"), legacy.__dict__)
+if "FORM_WEIGHT" not in legacy.__dict__:
+    raise AssertionError(f"{LEGACY_REV} is not the eight-term model")
 legacy_batters = legacy.score_batters(legal)
 legacy_bowlers = legacy.score_bowlers(legal, work)
 legacy_traces = copy.deepcopy(legacy.TRACES)
@@ -72,6 +83,8 @@ payload = {
     "bowlers": bowlers,
     "traces": traces,
     "pooled_current": pooled_current,
+    "no_super_batters": no_super_batters,
+    "no_super_bowlers": no_super_bowlers,
     "legacy_batters": legacy_batters,
     "legacy_bowlers": legacy_bowlers,
     "legacy_traces": legacy_traces,

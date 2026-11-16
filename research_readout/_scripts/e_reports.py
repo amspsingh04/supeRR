@@ -107,7 +107,7 @@ item("BUG-03", "BUG / INCONSISTENCY", "Bowler clutch compares spell economy with
      "Medium", "bowler clutch (weight 0.15)", "VERIFIED", "Shifts every bowler's own gap upward by their wide/no-ball rate; ranking effect not re-estimated (would require changing the method).",
      "Use the same delivery basis on both sides of the comparison.")
 item("KI-01", "KNOWN ISSUE", "Form term used a full-career bar (look-ahead)",
-     "Legacy form_by_season (git HEAD) compared each of the previous 8 innings with the player's FULL-CAREER strike rate/economy, which includes later matches.",
+     "Legacy form_by_season (git 29956ed) compared each of the previous 8 innings with the player's FULL-CAREER strike rate/economy, which includes later matches.",
      f"Source at git {P['head_rev'][:7]}: bar = float(career.loc[player]) with career = strike_rate/economy over all seasons. The current working tree removes Form entirely (7 terms, consistency 0.10).",
      "Resolved in current code", "legacy composite only", "VERIFIED (legacy); NOT_APPLICABLE (current)",
      f"Legacy 8-term vs current 7-term: batters Spearman {r3(abl('batter', 'legacy_8_term_with_form', 'spearman_vs_full'))}, top-20 overlap {int(abl('batter', 'legacy_8_term_with_form', 'top20_overlap'))}; bowlers Spearman {r3(abl('bowler', 'legacy_8_term_with_form', 'spearman_vs_full'))}, top-20 overlap {int(abl('bowler', 'legacy_8_term_with_form', 'top20_overlap'))}.",
@@ -166,11 +166,15 @@ item("M-11", "DATA", "DLS detail is limited", "Only revised overs and revised ta
      f"Reduced matches {f['dls_reduced_matches']}; chases with no supplied target (no required rate) {f['dls_excluded_matches']} matches.", "Low", "required-rate term", "VERIFIED", "", "")
 item("M-12", "DATA", "Source anomalies kept as supplied", "Deliveries with a player missing from the squad sheet are kept; one over has more than six legal balls; three rows have extras amounts that do not fit the type.",
      f"sheet_gap deliveries {f['ds_deliveries_flagged_sheet_gap']}; overs with >6 legal balls {f['ds_overs_with_more_than_6_legal_balls']}.", "Low", "", "VERIFIED", "", "")
-item("M-13", "ASSUMPTION", "'Other' extras are treated as illegal", "Decided in cleaning: counting them legal puts 150 innings past 120 legal balls.", f"{f['ds_other_extras']} non-super-over 'other' deliveries.", "Low", "", "EXISTING", "", "")
+item("M-13", "ASSUMPTION", "'Other' extras are treated as illegal", "Decided in cleaning: counting them legal puts 150 innings past 120 legal balls.", f"{f['ds_other_extras']} 'other' deliveries.", "Low", "", "EXISTING", "", "")
 item("M-14", "CODE HYGIENE", "Dead code and stale comments", "expectation_tables() and venue_ratings() are defined but never called; zscore's comment still says 'the other seven terms'; run_elo's `venues` argument is ignored.", "grep over *.py and *.ipynb", "Low", "", "VERIFIED", "", "")
 item("M-15", "METHODOLOGICAL", "Elo affects the ranking only through expectations", "The composite is built from ball values; final Elo ratings are not a component.",
      f"Season-end rating stability (Spearman, keys with >=120 balls both seasons): batters {g('elo_yoy_batter_2022', 2)}-{g('elo_yoy_batter_2025', 2)}, bowlers {g('elo_yoy_bowler_2023', 2)}-{g('elo_yoy_bowler_2025', 2)}. Step-size sensitivity: composite Spearman >= {min(f['elo_sens_half_steps_batter_spearman'], f['elo_sens_double_steps_bowler_spearman'], f['elo_sens_half_steps_bowler_spearman'], f['elo_sens_double_steps_batter_spearman']):.3f}.",
      "Low", "", "VERIFIED", "", "")
+item("M-16", "METHODOLOGICAL", "Super overs get knockout occasion but cannot reach the high band",
+     "Super overs are included with occasion max(stage, 1.5), death-phase ball difficulty and a chase rate in innings 4. Shock and run of play are computed per innings, so they start at zero for a super over, and the occasion-scaled base alone stays below the high cut.",
+     f"{f['pro_super_over_legal_balls']} legal balls; batter high-band share {pct(f['pro_super_over_share_in_batter_high_band'])}, bowler {pct(f['pro_super_over_share_in_bowler_high_band'])}; highest super-over batter pressure is {abs(f['pro_super_over_max_pressure_bat_vs_p80_cutoff']):.3f} below the p80 cut. Ranking effect vs excluding them: Spearman {abl('batter', 'exclude_super_overs', 'spearman_vs_full'):.4f} (batters), {abl('bowler', 'exclude_super_overs', 'spearman_vs_full'):.4f} (bowlers).",
+     "Low", "super-over specialists' high band and clutch", "VERIFIED", "", "")
 lim = pd.DataFrame(R)
 reg.save(lim, "09_limitations/limitations_register.csv", "facts from scripts a-d", "one row per issue")
 
@@ -181,18 +185,20 @@ w("# Methodological audit\n")
 w("This audit describes what the code in this repository actually executes, checked against the data. Nothing in the repository was changed. Where a number is given, it comes from a file in `research_readout/` (see `11_presentation_summary/source_traceability.csv`).\n")
 w("## 0. Version under audit\n")
 w(f"- Working tree `player_ratings.py`: **seven** weighted terms. Baseline 0.20, zero band 0.10, medium band 0.15, high band 0.20, clutch 0.15, peers 0.10, consistency 0.10. They sum to {f['weights_current_sum']:.2f}.")
-w(f"- The brief describes **eight** terms, with Form 0.05 and consistency 0.05. That is the version committed at git `{P['head_rev'][:7]}` (HEAD). Form was removed in the working tree in the previous session, at the user's request, and consistency was raised to 0.10.")
-w("- All official numbers in this pack come from the working tree. The 8-term version was re-run read-only from git HEAD on the same data and is reported as `legacy_8_term_with_form` wherever a comparison helps. Form is marked NOT_APPLICABLE for the current model.")
+w(f"- The brief describes **eight** terms, with Form 0.05 and consistency 0.05. That is the version at git `{P['head_rev'][:7]}`. Form was removed at the user's request (committed in 7af5382), and consistency was raised to 0.10.")
+w(f"- Super overs are **included** (changed in this session at the user's request; every commit up to 7af5382 drops them). {f['ds_super_over_deliveries_included']} deliveries, {f['ds_super_over_legal_balls_included']} legal balls, {f['ds_super_over_matches']} matches. Every super-over ball is a death ball, its occasion is max(stage occasion, 1.5) so it is never below a knockout, and the second super over chases the first super over's total + 1.")
+w("- All official numbers in this pack come from the working tree. The 8-term version's scoring functions were re-run read-only from git 29956ed on the same legal frame (super overs included), so the comparison isolates the Form change. It is reported as `legacy_8_term_with_form` wherever a comparison helps. Form is marked NOT_APPLICABLE for the current model.")
 w(f"- Reproduction: the in-memory run reproduces the shipped `ratings/batters.csv` and `ratings/bowlers.csv` exactly (max composite gap 2e-16, identical ranks). Ranked: {f['ranked_batters']} batters, {f['ranked_bowlers']} bowlers.\n")
 w("## 1. Data and cleaning\n")
 w(f"- {num(f['ds_raw_deliveries_source_file'])} deliveries; none are deleted in cleaning. Duplicate delivery keys: {f['ds_duplicate_delivery_keys_match_innings_ballnum']}.")
-w(f"- Excluded from ratings: {f['ds_super_over_deliveries_dropped']} super-over deliveries and {num(f['ds_illegal_deliveries_wide_noball_other'])} illegal deliveries ({num(f['ds_wides'])} wides, {f['ds_noballs']} no-balls, {f['ds_other_extras']} 'other').")
+w(f"- Super overs are kept: {f['ds_super_over_deliveries_included']} deliveries ({f['ds_super_over_legal_balls_included']} legal balls) in {f['ds_super_over_matches']} matches.")
+w(f"- Excluded from ball value: {num(f['ds_illegal_deliveries_wide_noball_other'])} illegal deliveries ({num(f['ds_wides'])} wides, {f['ds_noballs']} no-balls, {f['ds_other_extras']} 'other').")
 w(f"- Used: **{num(f['ds_legal_balls_used_in_ratings'])} legal balls** in {f['ds_matches_with_legal_balls']} matches, {f['ds_first_match_date']} to {f['ds_last_match_date']}. Ladders: IPL {num(f['ds_legal_IPL'])} balls in {f['ds_matches_IPL']} matches; T20I {num(f['ds_legal_T20I'])} in {f['ds_matches_T20I']}; T20 (Emerging/Rising) {num(f['ds_legal_T20'])} in {f['ds_matches_T20']}.")
 w(f"- Dismissals: bowler wickets are caught, bowled, LBW, stumped and hit wicket. Run outs ({f['ds_runouts_used']} used), retired out and obstructing do not credit the bowler.")
 w(f"- Reduced matches: {f['dls_reduced_matches']}. Reduced chases with no supplied target get no required rate ({f['dls_excluded_matches']} matches). DLS par scores are not in the data (REQUIRES_DATA).\n")
 w("## 2. Pressure as executed\n")
 w("```\npressure_bat  = occasion x competition x ball_bat  + shock_bat  + run_of_play_bat\npressure_bowl = occasion x competition x ball_bowl + shock_bowl + run_of_play_bowl\n```")
-w("- Occasion: Final 3.0, Semi 2.0, Qualifier/Eliminator 1.5, Super 4 1.3, League 1.0, other bilateral 0.8, dead rubber 0.4 (" + str(f["ds_dead_rubber_matches_occasion_0_4"]) + " matches). Competition: 0.7 for Emerging/Rising, otherwise 1.0.")
+w("- Occasion: Final 3.0, Semi 2.0, Qualifier/Eliminator 1.5, Super 4 1.3, League 1.0, other bilateral 0.8, dead rubber 0.4 (" + str(f["ds_dead_rubber_matches_occasion_0_4"]) + " matches). A super-over ball takes max(stage occasion, 1.5), even in a dead rubber. Competition: 0.7 for Emerging/Rising, otherwise 1.0.")
 w("- Ball difficulty (clipped 0..1). Batter: phase term (PP 0.25, middle 0.10, death 0.40), plus a wickets term (2–4 down 0.15, 5+ down 0.30), plus a chase-rate term (RRR ≥ 8 adds 0.15, RRR ≥ 12 adds 0.30). Bowler: phase term (PP 0.32, middle 0.24; death 0.32 to a recognised batter, otherwise 0.14), plus a wickets term (−0.10 or −0.25), plus the same rate term.")
 w(f"- Shock has two parts, added together and clipped to −0.5..1.")
 w(f"  - A count part over the previous six legal balls. Batter: 0.33 per wicket plus 0.05 per dot. Bowler: 0.33 per six plus 0.12 per four.")
@@ -228,6 +234,7 @@ for skill in ["batter", "bowler"]:
     w(f"  - equal weights: Spearman {r3(abl(skill, 'equal_weights', 'spearman_vs_full'))}")
     w(f"  - legacy 8-term model: Spearman {r3(abl(skill, 'legacy_8_term_with_form', 'spearman_vs_full'))}")
     w(f"  - ball-19 bug removed (diagnostic): Spearman {r3(abl(skill, 'diagnostic_runofplay_bugfree', 'spearman_vs_full'))}, top-20 overlap {int(abl(skill, 'diagnostic_runofplay_bugfree', 'top20_overlap'))}")
+    w(f"  - super overs excluded (the earlier pipeline): Spearman {abl(skill, 'exclude_super_overs', 'spearman_vs_full'):.4f}, top-20 overlap {int(abl(skill, 'exclude_super_overs', 'top20_overlap'))}")
 w("\n## 7. Issues\n")
 w("See `limitations_register.csv`. Bugs: BUG-01 (the ball-19 run-of-play index), BUG-02 (an export label), and BUG-03 (the delivery basis of bowler clutch). Known issues: KI-01 (resolved by removing Form), KI-02, KI-03 and KI-04, all verified with numbers.")
 (OUT / "09_limitations").mkdir(exist_ok=True)
@@ -258,7 +265,7 @@ reg.note("09_limitations/cricketing_interpretations.md", "facts a-d", "generated
 
 # ---------------------------------------------------------------- sanity interpretations
 S = ["# Sanity-check interpretations\n",
-     "Every number comes from `sanity_check_players.csv`. Ranks are out of the ranked pool: 216 batters, 226 bowlers. 'Legacy' means the 8-term model with Form, re-run from git HEAD. 'Baseline-only' ranks on the baseline z alone. Interpretations are marked as such.\n"]
+     "Every number comes from `sanity_check_players.csv`. Ranks are out of the ranked pool: 216 batters, 226 bowlers. 'Legacy' means the 8-term model with Form, re-run from git 29956ed. 'Baseline-only' ranks on the baseline z alone. Interpretations are marked as such.\n"]
 
 
 def line(name, skill):
@@ -314,6 +321,7 @@ K.append(f"9. **Elo is stable and well inside its bounds.** Steps were not halve
 K.append(f"10. **Form has been removed (seven terms, consistency 0.10).** The old 8-term ranking differs only slightly: Spearman {r3(abl('batter', 'legacy_8_term_with_form', 'spearman_vs_full'))} for batters and {r3(abl('bowler', 'legacy_8_term_with_form', 'spearman_vs_full'))} for bowlers. Its look-ahead (KI-01) no longer applies. *(08_validation/ablation_summary.csv)*")
 K.append(f"11. **The 2025 final's wicket timeline is verified.** PBKS lost wickets at legal balls {', '.join(map(str, f['shock_actual_wicket_legal_n']))}, matching the brief. As delivery numbers, including wides and no-balls, they are {', '.join(map(str, f['shock_actual_wicket_innings_ball_num']))}. *(06_shock/shock_innings_timeline.csv)*")
 (OUT / "11_presentation_summary").mkdir(exist_ok=True)
+K.append(f"12. **Super overs are now included, at knockout occasion, and barely move the tables.** {f['ds_super_over_legal_balls_included']} legal balls in {f['ds_super_over_matches']} matches. Against the same pipeline without them: batters Spearman {abl('batter', 'exclude_super_overs', 'spearman_vs_full'):.4f}, top-20 overlap {int(abl('batter', 'exclude_super_overs', 'top20_overlap'))}/20; bowlers {abl('bowler', 'exclude_super_overs', 'spearman_vs_full'):.4f}, {int(abl('bowler', 'exclude_super_overs', 'top20_overlap'))}/20. None of the super-over balls reaches the high band ({pct(f['pro_super_over_share_in_batter_high_band'])} batter, {pct(f['pro_super_over_share_in_bowler_high_band'])} bowler), because shock and run of play start at zero in a new innings. *(02_pressure/super_over_pressure.csv, 08_validation/ablation_summary.csv)*")
 (OUT / "11_presentation_summary/key_findings.md").write_text("\n".join(K), encoding="utf-8")
 reg.note("11_presentation_summary/key_findings.md", "facts a-d", "generated text")
 
@@ -348,7 +356,8 @@ D.append(f"- {f['ranked_batters']} batters and {f['ranked_bowlers']} bowlers mee
 D.append("- The brief lists 8 weighted terms. The code has 7: Form was removed and consistency raised to 0.10. Form is [NA].\n")
 D.append("## Slide 2: Data and cleaning\n")
 D.append(f"- Deliveries: {num(f['ds_raw_deliveries_source_file'])}; none deleted; duplicate delivery keys {f['ds_duplicate_delivery_keys_match_innings_ballnum']}. [C]")
-D.append(f"- Excluded: {f['ds_super_over_deliveries_dropped']} super-over deliveries, {num(f['ds_wides'])} wides, {f['ds_noballs']} no-balls, {f['ds_other_extras']} 'other' extras (treated as illegal). [C]")
+D.append(f"- Super overs included: {f['ds_super_over_deliveries_included']} deliveries, {f['ds_super_over_legal_balls_included']} legal balls, {f['ds_super_over_matches']} matches. [C]")
+D.append(f"- Excluded from ball value: {num(f['ds_wides'])} wides, {f['ds_noballs']} no-balls, {f['ds_other_extras']} 'other' extras (treated as illegal). [C]")
 D.append(f"- Legal balls used: **{num(f['ds_legal_balls_used_in_ratings'])}** in {f['ds_matches_with_legal_balls']} matches. IPL {num(f['ds_legal_IPL'])} ({f['ds_matches_IPL']} matches), T20I {num(f['ds_legal_T20I'])} ({f['ds_matches_T20I']}), Emerging/Rising {num(f['ds_legal_T20'])} ({f['ds_matches_T20']}, counted at weight 0.5). [C/E: matches exports/01_cleaning_funnel.csv]")
 D.append(f"- Players who faced or bowled a legal ball: {f['ds_unique_batters_faced_legal_ball']} batters, {f['ds_unique_bowlers_bowled_legal_ball']} bowlers. [C]")
 D.append(f"- Reduced matches: {f['dls_reduced_matches']}. Reduced chases with no supplied target: {f['dls_excluded_matches']}. DLS par: [RD].")
@@ -368,6 +377,7 @@ D.append(f"- {pct(f['se_share_of_batter_high_band_balls_within_6_after_wicket'],
 D.append(f"- {pct(f['se_share_of_bowler_high_band_balls_with_four_or_six_in_last_6'], 2)} of bowler high-band balls follow a four or six in the previous 6 (zero band: {pct(f['se_share_of_bowler_zero_band_balls_with_four_or_six_in_last_6'])}). [C]")
 D.append(f"- Strike rate by batter band (zero / medium / high): {f['pr_sr_batter_all_zero']:.1f} / {f['pr_sr_batter_all_medium']:.1f} / {f['pr_sr_batter_all_high']:.1f}. Pace economy: {f['pr_econ_bowler_pace_zero']:.2f} / {f['pr_econ_bowler_pace_medium']:.2f} / {f['pr_econ_bowler_pace_high']:.2f}. Spin economy: {f['pr_econ_bowler_spin_zero']:.2f} / {f['pr_econ_bowler_spin_medium']:.2f} / {f['pr_econ_bowler_spin_high']:.2f} (legal balls). [C]")
 D.append(f"- High-band share in balls 1–18: {pct(f['pro_share_of_balls_1_to_18_in_batter_high_band'], 2)}. In finals: {pct(f['pro_share_of_final_balls_in_batter_high_band'])}; in league games: {pct(f['pro_share_of_league_balls_in_batter_high_band'])}. [C]")
+D.append(f"- Super overs ({f['pro_super_over_legal_balls']} legal balls) carry knockout occasion (mean {f['pro_super_over_mean_occasion']:.2f}) and mean batter pressure {f['pro_super_over_mean_pressure_bat']:.3f}, against {f['pro_knockout_match_mean_pressure_bat_excluding_super_overs']:.3f} for other knockout-match balls and {f['pro_death_overs_mean_pressure_bat_excluding_super_overs']:.3f} for other death balls. Yet {pct(f['pro_super_over_share_in_batter_high_band'])} of them reach the batter high band and {pct(f['pro_super_over_share_in_bowler_high_band'])} the bowler high band: shock and run of play start at zero in a new innings, and the highest super-over ball is {abs(f['pro_super_over_max_pressure_bat_vs_p80_cutoff']):.3f} below the high cut. [C] (`02_pressure/super_over_pressure.csv`, chart `slide_03_pressure/super_over_pressure.png`)")
 D.append("- Charts: `10_charts/slide_04_high_pressure_meaning/`.\n")
 D.append("## Slide 5: Expected runs and wickets (ball value)\n")
 D.append("- Ball value: batter = (runs − xR) − 4 × (out − xW); bowler = (xR − charged) + 4 × (wicket − xW). Predictions use only earlier balls. [E]")
@@ -413,6 +423,7 @@ D.append(tbl(ab, ["skill", "variant", "spearman_vs_full", "kendall_tau_vs_full",
              ["skill", "variant", "Spearman", "Kendall", "top-10 overlap", "top-20 overlap", "top-10 Jaccard", "top-20 Jaccard", "mean abs rank change"]))
 D.append(f"- Sooryavanshi: official {f['abl_rank_Vaibhav Sooryavanshi_full_current']}, baseline only {f['abl_rank_Vaibhav Sooryavanshi_baseline_only']}, legacy {f['abl_rank_Vaibhav Sooryavanshi_legacy_8_term_with_form']}, pooled z {f['abl_rank_Vaibhav Sooryavanshi_no_role_split_pooled_z']}, without clutch {f['abl_rank_Vaibhav Sooryavanshi_drop_clutch']}. [C]")
 D.append(f"- Gurbaz: official {f['abl_rank_Rahmanullah Gurbaz_full_current']}, baseline only {f['abl_rank_Rahmanullah Gurbaz_baseline_only']}, legacy {f['abl_rank_Rahmanullah Gurbaz_legacy_8_term_with_form']}, pooled z {f['abl_rank_Rahmanullah Gurbaz_no_role_split_pooled_z']}, without clutch {f['abl_rank_Rahmanullah Gurbaz_drop_clutch']}. [C]")
+D.append(f"- Super overs: including them (the official run) against excluding them gives batters Spearman {abl('batter', 'exclude_super_overs', 'spearman_vs_full'):.4f} ({int(abl('batter', 'exclude_super_overs', 'top20_overlap'))}/20 top-20 overlap) and bowlers {abl('bowler', 'exclude_super_overs', 'spearman_vs_full'):.4f} ({int(abl('bowler', 'exclude_super_overs', 'top20_overlap'))}/20). Largest composite change: batters {f['noso_max_abs_composite_change_batter']:.3f}, bowlers {f['noso_max_abs_composite_change_bowler']:.3f}. Same ranked pool: {f['noso_same_ranked_set_batter'] and f['noso_same_ranked_set_bowler']}. Movers: `ablation_top_movers.csv` ('super overs included vs excluded'). [C]")
 D.append(f"- The baseline-only and full ranks reproduce `exports/23_ablation_ranks.csv`: {f['export23_reproduced']}. [E]  Charts: `10_charts/slide_12_ablation/`.\n")
 D.append("## Slide 13: Component correlations and influence\n")
 D.append(f"- Batters: the most correlated pair is {f['corr_batters_max_pair'][0]}–{f['corr_batters_max_pair'][1]} ({f['corr_batters_max_pair'][2]:.3f}); the most negative is {f['corr_batters_min_pair'][0]}–{f['corr_batters_min_pair'][1]} ({f['corr_batters_min_pair'][2]:.3f}). High vs medium band {g('corr_batters_band_high_band_medium')}. [C]")

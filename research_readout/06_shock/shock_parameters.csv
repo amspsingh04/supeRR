@@ -8,8 +8,8 @@ bowler_four_step,0.12,EXISTING,per four (bat_runs == 4)
 bowler_count_cap,1.0,EXISTING,"min(1, ...)"
 batter_excess_input,sum(bowler_wicket - x_wicket) over window,EXISTING,"uses bowler-credited wickets only (run outs ignored here, unlike the count part)"
 bowler_excess_input,sum(charged_runs - x_runs_bowl) over window,EXISTING,legal balls only: wides and no-balls are not in the window
-batter_excess_scale_sd,0.511108254446581,COMPUTED,population SD of the window sums over all legal balls (zeros on balls 1-6 included)
-bowler_excess_scale_sd,4.417667230847296,COMPUTED,same
+batter_excess_scale_sd,0.5110667654190784,COMPUTED,population SD of the window sums over all legal balls (zeros on balls 1-6 included)
+bowler_excess_scale_sd,4.417313700476976,COMPUTED,same
 excess_clip,"[-0.5, 1.0]",EXISTING,
 final_shock_clip,"[-0.5, 1.0]",EXISTING,count + excess
 run_of_play_window,last 6 vs last 18 legal balls,EXISTING,zero before ball 19

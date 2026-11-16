@@ -150,8 +150,8 @@ def ranking_table(table, legacy, skill):
 
 fb = ranking_table(bat, lbat, "batter")
 fw = ranking_table(bowl, lbowl, "bowler")
-reg.save(fb, "07_rankings/final_batter_rankings.csv", "score_batters (current 7-term) + git HEAD 8-term for legacy columns", "ranked players only")
-reg.save(fw, "07_rankings/final_bowler_rankings.csv", "score_bowlers (current 7-term) + git HEAD 8-term for legacy columns", "ranked players only")
+reg.save(fb, "07_rankings/final_batter_rankings.csv", "score_batters (current 7-term) + git 29956ed 8-term for legacy columns", "ranked players only")
+reg.save(fw, "07_rankings/final_bowler_rankings.csv", "score_bowlers (current 7-term) + git 29956ed 8-term for legacy columns", "ranked players only")
 for n in (10, 20):
     reg.save(fb.head(n), f"07_rankings/top{n}_batters.csv", "final_batter_rankings", f"first {n}")
     reg.save(fw.head(n), f"07_rankings/top{n}_bowlers.csv", "final_bowler_rankings", f"first {n}")
@@ -201,7 +201,7 @@ def order(score: pd.Series, ids: pd.Series) -> pd.Series:
     return pd.Series(np.arange(1, len(frame) + 1), index=frame["id"].to_numpy())
 
 
-def variants(table, legacy, pooled, diag, skill):
+def variants(table, legacy, pooled, diag, no_super, skill):
     r = table.loc[table["ranked"]].set_index("player_id")
     ids = pd.Series(r.index, index=r.index)
     out = {"full_current": r["rank"].astype(int)}
@@ -215,6 +215,8 @@ def variants(table, legacy, pooled, diag, skill):
         out[f"drop_{comp}"] = order(z[keep].mul(pd.Series(WEIGHTS)[keep]).sum(axis=1), ids)
     lg = legacy.set_index("player_id").reindex(r.index)
     out["legacy_8_term_with_form"] = order(lg["composite"], ids)
+    ns = no_super.set_index("player_id").reindex(r.index)
+    out["exclude_super_overs"] = order(ns["composite"], ids)
     if pooled is not None:
         pooled_rank = pooled.set_index("player_id")["rank"].reindex(r.index)
         out["no_role_split_pooled_z"] = pooled_rank.astype(int)
@@ -241,11 +243,16 @@ diag_bowl = pr.score_bowlers(D, work)
 reg.fact("diag_rop_ranked_batters", int(diag_bat["ranked"].sum()))
 reg.fact("diag_rop_ranked_bowlers", int(diag_bowl["ranked"].sum()))
 
-vb = variants(bat, lbat, P["pooled_current"], diag_bat, "batter")
-vw = variants(bowl, lbowl, None, diag_bowl, "bowler")
-reg.save(vb.reset_index(), "08_validation/ablation_batter_rank_changes.csv", "ratings tables; git HEAD legacy; diagnostic rescoring",
+vb = variants(bat, lbat, P["pooled_current"], diag_bat, P["no_super_batters"], "batter")
+vw = variants(bowl, lbowl, None, diag_bowl, P["no_super_bowlers"], "bowler")
+for skill, ns, cur in [("batter", P["no_super_batters"], bat), ("bowler", P["no_super_bowlers"], bowl)]:
+    reg.fact(f"noso_ranked_{skill}s", int(ns["ranked"].sum()))
+    reg.fact(f"noso_same_ranked_set_{skill}", bool(set(ns.loc[ns["ranked"], "player_id"]) == set(cur.loc[cur["ranked"], "player_id"])))
+    gap = (cur.set_index("player_id")["composite"] - ns.set_index("player_id")["composite"].reindex(cur["player_id"]).to_numpy()).abs()
+    reg.fact(f"noso_max_abs_composite_change_{skill}", float(gap.max()))
+reg.save(vb.reset_index(), "08_validation/ablation_batter_rank_changes.csv", "ratings tables; git 29956ed legacy; diagnostic rescoring",
          "rank of each ranked batter under each variant (ties broken by player_id as in score_batters)")
-reg.save(vw.reset_index(), "08_validation/ablation_bowler_rank_changes.csv", "ratings tables; git HEAD legacy; diagnostic rescoring", "same for bowlers")
+reg.save(vw.reset_index(), "08_validation/ablation_bowler_rank_changes.csv", "ratings tables; git 29956ed legacy; diagnostic rescoring", "same for bowlers")
 
 ex23 = pd.read_csv(ROOT / "exports" / "23_ablation_ranks.csv")
 chk = bat.loc[bat["ranked"]].copy()
@@ -276,7 +283,12 @@ for skill, frame in [("batter", vb), ("bowler", vw)]:
         summary.append(row)
 summary = pd.DataFrame(summary)
 summary["status"] = "COMPUTED"
-summary["note"] = np.where(summary["variant"].str.startswith("diagnostic"), "diagnostic only: shows the size of a documented bug; not an official result", "re-weighting of the official component z-scores")
+summary["note"] = np.select(
+    [summary["variant"].str.startswith("diagnostic"), summary["variant"].eq("exclude_super_overs"), summary["variant"].eq("legacy_8_term_with_form")],
+    ["diagnostic only: shows the size of a documented bug; not an official result",
+     "data variant: super-over rows removed before add_situation (the pipeline before super overs were included)",
+     "git 29956ed scoring functions (8 terms with Form) on the same legal frame"],
+    "re-weighting of the official component z-scores")
 reg.save(summary, "08_validation/ablation_summary.csv", "ablation rank tables", "Spearman, Kendall tau-b, top-k overlap and Jaccard vs the official ranking")
 for _, r in summary.iterrows():
     for c in ["spearman_vs_full", "kendall_tau_vs_full", "top10_overlap", "top20_overlap", "top10_jaccard", "top20_jaccard", "mean_abs_rank_change"]:
@@ -289,7 +301,8 @@ for name in ["Vaibhav Sooryavanshi", "Rahmanullah Gurbaz"]:
 movers = []
 for skill, frame in [("batter", vb), ("bowler", vw)]:
     for var, label in [("baseline_only", "full composite vs baseline only"), ("legacy_8_term_with_form", "current 7-term vs legacy 8-term"),
-                       ("no_role_split_pooled_z", "role-split z vs pooled z"), ("diagnostic_runofplay_bugfree", "official vs ball-19 bug removed (diagnostic)")]:
+                       ("no_role_split_pooled_z", "role-split z vs pooled z"), ("diagnostic_runofplay_bugfree", "official vs ball-19 bug removed (diagnostic)"),
+                       ("exclude_super_overs", "super overs included vs excluded")]:
         if var not in frame.columns:
             continue
         change = (frame[var] - frame["full_current"])  # positive = the full model ranks the player higher
@@ -318,7 +331,7 @@ for skill, table, legacy in [("batters", bat, lbat), ("bowlers", bowl, lbowl)]:
         blocks.append(cm)
     out = pd.concat(blocks, ignore_index=True)
     out["population"] = f"ranked {skill} (n={len(r)})"
-    reg.save(out, f"08_validation/component_correlation_{skill}.csv", "ratings tables (ranked players) + git HEAD form z", "pairwise correlation matrix")
+    reg.save(out, f"08_validation/component_correlation_{skill}.csv", "ratings tables (ranked players) + git 29956ed form z", "pairwise correlation matrix")
     pc = data.corr(method="pearson")
     for a in COMPONENTS:
         reg.fact(f"corr_{skill}_{a}_composite", float(pc.loc[a, "composite"]))
@@ -397,7 +410,7 @@ for k in (10, 20, 50):
 lst = bowl.loc[bowl["ranked"], "role"].value_counts()
 rep.append({"skill": "bowler", "ranking": "current", "top_k": f"all ({int(bowl['ranked'].sum())})", "pace": int(lst.get("Pace", 0)), "spin": int(lst.get("Spin", 0)), "status": "COMPUTED"})
 rep = pd.DataFrame(rep)
-reg.save(rep, "08_validation/role_ranking_representation.csv", "ratings tables; _pooled_batter_order (current and git HEAD)", "role counts in top-k")
+reg.save(rep, "08_validation/role_ranking_representation.csv", "ratings tables; _pooled_batter_order (current and git 29956ed)", "role counts in top-k")
 for label in lists:
     row = rep.loc[rep["ranking"].eq(label) & rep["top_k"].eq(20)].iloc[0]
     reg.fact(f"rolerep_{label}_top20", [int(row["top"]), int(row["middle"]), int(row["lower"])])
@@ -460,6 +473,7 @@ for name in SANITY_PLAYERS:
             row["baseline_only_rank"] = v["baseline_only"]
             row["no_role_split_rank"] = v.get("no_role_split_pooled_z", np.nan)
             row["bugfree_runofplay_rank_diagnostic"] = v.get("diagnostic_runofplay_bugfree", np.nan)
+            row["rank_with_super_overs_excluded"] = v.get("exclude_super_overs", np.nan)
         if skill == "batter":
             row.update({"runs": h["runs"], "strike_rate_level_weighted": h["strike_rate"], "average_level_weighted": h["average"]})
         else:

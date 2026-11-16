@@ -47,6 +47,9 @@ OCCASION = {
     "League": 1.0,
     "Others": 0.8,
 }
+# A super over is sudden death, so it is never below a knockout. A semi-final or final keeps its own weight.
+SUPER_OVER_OCCASION = 1.5
+SUPER_OVER_BALLS = 6
 
 
 def find_silver() -> Path:
@@ -156,8 +159,9 @@ def _phase_labels(position: pd.Series, length: pd.Series) -> pd.Series:
 
 
 def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Tag every non-super-over ball. Ratings use the legal rows."""
-    work = balls.loc[~balls["is_super_over"].astype(bool)].copy()
+    """Tag every ball, super overs included. Ratings use the legal rows."""
+    work = balls.copy()
+    work["is_super_over"] = work["is_super_over"].astype(bool)
     work["bat_runs"] = work["runs"].fillna(0.0)
     first_extra = work["extras1_runs"].fillna(0.0)
     second_extra = work["extras_2_runs"].fillna(0.0)
@@ -187,7 +191,10 @@ def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
         work["second_innings_balls"],
     )
     work["innings_length"] = pd.Series(length, index=work.index).fillna(120).clip(lower=1)
+    work.loc[work["is_super_over"], "innings_length"] = SUPER_OVER_BALLS
     work["phase"] = _phase_labels(work["ball_position"], work["innings_length"])
+    # Every super-over ball is a death ball.
+    work.loc[work["is_super_over"], "phase"] = "death"
 
     work["ladder"] = np.where(work["comp_group"].eq("IPL"), "IPL", np.where(work["comp_group"].eq("T20I"), "T20I", "T20"))
     work["level_weight"] = np.where(work["ladder"].eq("T20"), LOWER_LEVEL_WEIGHT, 1.0)
@@ -195,14 +202,19 @@ def add_situation(balls: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     legal["n"] = legal["legal_before"] + 1
     legal["left"] = (legal["innings_length"] - legal["n"] + 1).clip(lower=0)
     legal["phase"] = _phase_labels(legal["n"], legal["innings_length"])
+    legal.loc[legal["is_super_over"], "phase"] = "death"
 
     first_total = work.loc[work["innings"].eq(1)].groupby("match_id")["team_run"].sum()
+    super_total = work.loc[work["innings"].eq(3)].groupby("match_id")["team_run"].sum()
     legal["target"] = legal["revised_target"]
     missing_target = legal["target"].isna() | legal["target"].le(0)
     # An ordinary chase needs one more than the first innings. A DLS target is used as supplied.
     legal.loc[missing_target, "target"] = legal.loc[missing_target, "match_id"].map(first_total) + 1
-    reduced_without_target = legal["is_reduced"].fillna(False).astype(bool) & missing_target
-    chase = legal["innings"].eq(2) & legal["target"].notna() & legal["left"].gt(0) & ~reduced_without_target
+    # The second super over chases one more than the first super over.
+    super_chase = legal["innings"].eq(4)
+    legal.loc[super_chase, "target"] = legal.loc[super_chase, "match_id"].map(super_total) + 1
+    reduced_without_target = legal["is_reduced"].fillna(False).astype(bool) & missing_target & ~super_chase
+    chase = legal["innings"].isin([2, 4]) & legal["target"].notna() & legal["left"].gt(0) & ~reduced_without_target
     needed = (legal["target"] - legal["runs_before"]).clip(lower=0)
     legal["rrr"] = np.where(chase, needed / (legal["left"] / 6.0), np.nan)
     legal["crr"] = np.where(legal["n"].gt(1), legal["runs_before"] / ((legal["n"] - 1) / 6.0), np.nan)
@@ -250,7 +262,7 @@ def _ball_difficulty(legal: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     batter_wickets = np.where(wickets <= 1, 0.0, np.where(wickets <= 4, 0.15, 0.30))
     bowler_wickets = np.where(wickets <= 1, 0.0, np.where(wickets <= 4, -0.10, -0.25))
     rate = legal["rrr"].to_numpy(dtype=float)
-    chase = legal["innings"].eq(2) & np.isfinite(rate)
+    chase = legal["innings"].isin([2, 4]) & np.isfinite(rate)
     rate_term = np.where(~chase, 0.0, np.where(rate >= 12, 0.30, np.where(rate >= 8, 0.15, 0.0)))
     batter = pd.Series(np.clip(batter_phase.to_numpy() + batter_wickets + rate_term, 0.0, 1.0), index=legal.index)
     bowler = pd.Series(np.clip(bowler_phase.to_numpy() + bowler_wickets + rate_term, 0.0, 1.0), index=legal.index)
@@ -338,6 +350,7 @@ def _attach_pressure(legal: pd.DataFrame) -> pd.DataFrame:
     dead = _dead_series_matches(legal)
     occasion = legal["stage"].map(OCCASION).fillna(1.0).astype(float)
     occasion = occasion.where(~legal["match_id"].isin(dead), 0.4)
+    occasion = occasion.where(~legal["is_super_over"], np.maximum(occasion, SUPER_OVER_OCCASION))
     competition = _competition_weight(legal)
     batter_ball, bowler_ball = _ball_difficulty(legal)
     shock_batter, shock_bowler, delta_batter, delta_bowler = _shock_and_delta(legal)
@@ -687,7 +700,7 @@ def innings_comparisons(spells: pd.DataFrame, player_col: str, metric: str, high
     buckets = {(match, innings): frame for (match, innings), frame in qualified.groupby(["match_id", "innings"], sort=False)}
     rows = []
     for (match, innings), frame in buckets.items():
-        opposite = buckets.get((match, 1 if innings == 2 else 2 if innings == 1 else -1))
+        opposite = buckets.get((match, {1: 2, 2: 1, 3: 4, 4: 3}.get(innings, -1)))
         values = frame[metric].to_numpy(dtype=float)
         players = frame[player_col].to_numpy()
         seasons = frame["season"].to_numpy()
@@ -978,7 +991,7 @@ def score_bowlers(legal: pd.DataFrame, work: pd.DataFrame) -> pd.DataFrame:
     arm = legal.groupby(player)["pace_or_spin"].agg(_mode).reindex(ids)
     legal_balls = legal.groupby(player).size().reindex(ids).astype(float)
     wickets = work.groupby(player)["is_bowler_wicket"].sum().reindex(ids).fillna(0).astype(float)
-    # is_bowler_wicket may be bool; sum works. Super overs already left work.
+    # is_bowler_wicket may be bool; sum works.
     conceded = work.groupby(player)["conceded"].sum().reindex(ids).fillna(0).astype(float)
     weight = legal["level_weight"]
     legal_balls_w = weight.groupby(legal[player]).sum().reindex(ids).astype(float)
@@ -1218,11 +1231,10 @@ def write_deck_exports(balls: pd.DataFrame, work: pd.DataFrame, legal: pd.DataFr
 
     raw = int(len(balls))
     super_overs = int(balls["is_super_over"].astype(bool).sum())
-    kept = balls.loc[~balls["is_super_over"].astype(bool)]
-    wides_noballs = int((~kept["is_legal"].astype(bool)).sum())
-    legal_used = int((~balls["is_super_over"].astype(bool) & balls["is_legal"].astype(bool)).sum())
+    wides_noballs = int((~balls["is_legal"].astype(bool)).sum())
+    legal_used = int(balls["is_legal"].astype(bool).sum())
     pd.DataFrame({
-        "stage": ["raw_deliveries", "super_overs_dropped", "wides_noballs_other_excluded", "legal_balls_used"],
+        "stage": ["raw_deliveries", "super_over_deliveries_included", "wides_noballs_other_excluded", "legal_balls_used"],
         "count": [raw, super_overs, wides_noballs, legal_used],
     }).to_csv(out / "01_cleaning_funnel.csv", index=False)
 

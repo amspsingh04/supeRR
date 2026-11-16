@@ -17,12 +17,12 @@ batter_update,raw += k_run*(bat_runs - xR) - k_wicket*(striker_out - xW),EXISTIN
 bowler_update,raw += -k_run*(charged - xR_bowl) + k_wicket*(bowler_wicket - xW),EXISTING,run_elo,
 team_update,"per match, standard logistic Elo with k_team on the result (no result = 0.5)",EXISTING,run_elo,
 ratings_kept_per_ladder,True,EXISTING,"run_elo keys (player, ladder)",
-batter_elo_min,931.0280134310676,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
-batter_elo_max,2571.931634318331,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
-batter_elo_sd,141.7608467656794,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
-bowler_elo_min,1059.9566616779841,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
-bowler_elo_max,2107.911701456278,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
-bowler_elo_sd,117.53743794368361,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
+batter_elo_min,931.461168703898,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
+batter_elo_max,2571.5772365881,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
+batter_elo_sd,141.7592889739014,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
+bowler_elo_min,1059.8365539955935,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
+bowler_elo_max,2136.5712758289606,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
+bowler_elo_sd,118.02022919857033,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
 team_elo_min,1361.4897549641098,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
 team_elo_max,1647.1383089438555,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
 grounds,97,COMPUTED,"fit_elo summary (final raw ratings, all player-ladder keys)",
@@ -31,22 +31,22 @@ batter_player_ladder_keys,1165,COMPUTED,legal frame,
 bowler_player_ladder_keys,851,COMPUTED,legal frame,
 batter_keys_under_30_balls,464,COMPUTED,legal frame,
 bowler_keys_under_30_balls,172,COMPUTED,legal frame,
-batter_final_sd_IPL,164.52422503320886,COMPUTED,legal frame,
-bowler_final_sd_IPL,129.46619779163632,COMPUTED,legal frame,
-batter_final_sd_T20I,140.89955015541943,COMPUTED,legal frame,
-bowler_final_sd_T20I,115.66865385693511,COMPUTED,legal frame,
-batter_final_sd_T20,77.84972247861458,COMPUTED,legal frame,
-bowler_final_sd_T20,92.30949839883358,COMPUTED,legal frame,
+batter_final_sd_IPL,164.45444839797517,COMPUTED,legal frame,
+bowler_final_sd_IPL,130.0122541179611,COMPUTED,legal frame,
+batter_final_sd_T20I,140.94213311596368,COMPUTED,legal frame,
+bowler_final_sd_T20I,115.80962856141491,COMPUTED,legal frame,
+batter_final_sd_T20,77.81522532511464,COMPUTED,legal frame,
+bowler_final_sd_T20,94.37123818344895,COMPUTED,legal frame,
 season_end_rating_spearman_batter_2022_2023,0.537012987012987,COMPUTED,legal frame,55 player-ladder keys with >=120 balls in both seasons
 season_end_rating_spearman_batter_2023_2024,0.6962010520163648,COMPUTED,legal frame,59 player-ladder keys with >=120 balls in both seasons
-season_end_rating_spearman_batter_2024_2025,0.7616114897760466,COMPUTED,legal frame,79 player-ladder keys with >=120 balls in both seasons
-season_end_rating_spearman_batter_2025_2026,0.789075630252101,COMPUTED,legal frame,69 player-ladder keys with >=120 balls in both seasons
+season_end_rating_spearman_batter_2024_2025,0.7580087633885103,COMPUTED,legal frame,79 player-ladder keys with >=120 balls in both seasons
+season_end_rating_spearman_batter_2025_2026,0.7883814395323347,COMPUTED,legal frame,69 player-ladder keys with >=120 balls in both seasons
 season_end_rating_spearman_bowler_2022_2023,0.4637177397028516,COMPUTED,legal frame,58 player-ladder keys with >=120 balls in both seasons
-season_end_rating_spearman_bowler_2023_2024,0.4432123655913978,COMPUTED,legal frame,63 player-ladder keys with >=120 balls in both seasons
+season_end_rating_spearman_bowler_2023_2024,0.4430203533026114,COMPUTED,legal frame,63 player-ladder keys with >=120 balls in both seasons
 season_end_rating_spearman_bowler_2024_2025,0.71535233864001,COMPUTED,legal frame,73 player-ladder keys with >=120 balls in both seasons
-season_end_rating_spearman_bowler_2025_2026,0.7366071428571429,COMPUTED,legal frame,63 player-ladder keys with >=120 balls in both seasons
-sensitivity_half_steps_batter_composite_spearman,0.9959454149251598,COMPUTED,diagnostic rerun of run_elo + score_*,k=2.0/8.0/10.0; elo sd 89.4; top-20 overlap 18
-sensitivity_half_steps_bowler_composite_spearman,0.9911072482090181,COMPUTED,diagnostic rerun of run_elo + score_*,k=2.0/8.0/10.0; elo sd 70.8; top-20 overlap 17
-sensitivity_double_steps_batter_composite_spearman,0.9936531751985614,COMPUTED,diagnostic rerun of run_elo + score_*,k=8.0/32.0/40.0; elo sd 214.9; top-20 overlap 18
-sensitivity_double_steps_bowler_composite_spearman,0.9845364517488411,COMPUTED,diagnostic rerun of run_elo + score_*,k=8.0/32.0/40.0; elo sd 185.4; top-20 overlap 16
+season_end_rating_spearman_bowler_2025_2026,0.7354070660522274,COMPUTED,legal frame,63 player-ladder keys with >=120 balls in both seasons
+sensitivity_half_steps_batter_composite_spearman,0.9959204086735969,COMPUTED,diagnostic rerun of run_elo + score_*,k=2.0/8.0/10.0; elo sd 89.4; top-20 overlap 18
+sensitivity_half_steps_bowler_composite_spearman,0.9911757269279392,COMPUTED,diagnostic rerun of run_elo + score_*,k=2.0/8.0/10.0; elo sd 71.0; top-20 overlap 17
+sensitivity_double_steps_batter_composite_spearman,0.9937019969278034,COMPUTED,diagnostic rerun of run_elo + score_*,k=8.0/32.0/40.0; elo sd 215.0; top-20 overlap 18
+sensitivity_double_steps_bowler_composite_spearman,0.9839538558786346,COMPUTED,diagnostic rerun of run_elo + score_*,k=8.0/32.0/40.0; elo sd 186.2; top-20 overlap 16
 elo_used_in_composite_directly,False,COMPUTED,score_batters/score_bowlers,"Elo enters only through xR/xW (the gap); the composite uses ball values, not ratings"

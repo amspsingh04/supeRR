@@ -7,8 +7,8 @@ ball_bat,"clip(phase term [PP 0.25, middle 0.10, death 0.40] + wickets term [0-1
 ball_bowl,"clip(phase term [PP 0.32, middle 0.24, death 0.32 if striker order<=7 else 0.14] + wickets term [0-1 0, 2-4 -0.10, 5+ -0.25] + same chase rate term, 0, 1)",_ball_difficulty,COMPUTED
 count shock bat,"min(1, 0.33 x wickets + 0.05 x dots) over previous 6 legal balls of the innings; wickets exclude Retire Out and Obstructing; zero for the first 6 balls",_shock_and_delta,COMPUTED
 count shock bowl,"min(1, 0.33 x sixes + 0.12 x fours) over previous 6 legal balls",_shock_and_delta,COMPUTED
-excess shock bat,"clip(sum over previous 6 of (bowler_wicket - x_wicket) / 0.51111, -0.5, 1)",_add_expected_shock,COMPUTED
-excess shock bowl,"clip(sum over previous 6 of (charged_runs - x_runs_bowl) / 4.41767, -0.5, 1)",_add_expected_shock,COMPUTED
+excess shock bat,"clip(sum over previous 6 of (bowler_wicket - x_wicket) / 0.51107, -0.5, 1)",_add_expected_shock,COMPUTED
+excess shock bowl,"clip(sum over previous 6 of (charged_runs - x_runs_bowl) / 4.41731, -0.5, 1)",_add_expected_shock,COMPUTED
 final shock,"clip(count shock + excess shock, -0.5, 1)",_add_expected_shock,COMPUTED
 delta_bat,"clip((wickets/6 over last 6 - wickets/18 over last 18) / 0.08301, -0.5, 1); 0 before ball 19. BUG: on ball 19 the 18-ball sum is cum[17] - cum[-1] (innings total), so ball 19 sees the whole innings; the scale is inflated (bug-free scale 0.07334)",_shock_and_delta,COMPUTED
 delta_bowl,"clip((bat runs/6 over last 6 - bat runs/18 over last 18) / 1.10721, -0.5, 1); 0 before ball 19. Same ball-19 BUG (bug-free scale 0.59284)",_shock_and_delta,COMPUTED

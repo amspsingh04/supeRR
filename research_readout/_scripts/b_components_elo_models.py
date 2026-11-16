@@ -38,11 +38,11 @@ defs = pd.DataFrame([
     ("consistency", 0.10, 0.05, "minus the level-weighted SD of match-mean ball value over matches with >=6 balls",
      "level-weighted (no season decay)", "SD shrunk toward the reference-pool typical SD with 8 matches", "batters within order group; bowlers all", "consistency_parts"),
     ("form", 0.00, 0.05, "REMOVED in the current code. Legacy: share of the previous 8 innings above the player's FULL-CAREER SR/economy minus 0.5 (look-ahead)",
-     "legacy: decay x level weighted", "legacy: shrunk to 0 with 8 innings", "legacy: batters within order group", "git HEAD form_by_season"),
+     "legacy: decay x level weighted", "legacy: shrunk to 0 with 8 innings", "legacy: batters within order group", "git 29956ed form_by_season"),
 ], columns=["component", "weight_current", "weight_legacy_git_head", "raw_input", "aggregation_weighting", "shrinkage", "zscore_scope", "code"])
 defs["zscore"] = "z on reference pool (n_eff >= 30 decay x level weighted legal balls), population SD, capped at +-3"
 defs["status"] = np.where(defs["component"].eq("form"), "NOT_APPLICABLE", "EXISTING")
-reg.save(defs, "03_components/component_definitions.csv", "player_ratings.py (working tree) and git HEAD", "read from code")
+reg.save(defs, "03_components/component_definitions.csv", "player_ratings.py (working tree) and git 29956ed", "read from code")
 reg.fact("weights_current_sum", float(sum(WEIGHTS.values())))
 reg.fact("weights_legacy_sum", float(sum(LEGACY_WEIGHTS.values())))
 reg.fact("legacy_weights_from_git", P["legacy_weights"])
@@ -79,8 +79,8 @@ def scores(table, math, legacy, skill):
 
 bscore = scores(bat, T["batters"]["math"], lbat, "batter")
 wscore = scores(bowl, T["bowlers"]["math"], lbowl, "bowler")
-reg.save(bscore, "03_components/batter_component_scores.csv", "score_batters table + TRACES math + git HEAD legacy scoring", "join on player_id")
-reg.save(wscore, "03_components/bowler_component_scores.csv", "score_bowlers table + TRACES math + git HEAD legacy scoring", "join on player_id")
+reg.save(bscore, "03_components/batter_component_scores.csv", "score_batters table + TRACES math + git 29956ed legacy scoring", "join on player_id")
+reg.save(wscore, "03_components/bowler_component_scores.csv", "score_bowlers table + TRACES math + git 29956ed legacy scoring", "join on player_id")
 reg.fact("comp_sum_check_maxgap", float(max(bscore["contrib_sum_check"].abs().max(), wscore["contrib_sum_check"].abs().max())))
 
 contrib = []

@@ -1,6 +1,14 @@
 # Research readout: data extraction and validation audit
 
-This folder holds the audit of the SupeRR pressure-rating pipeline: extracted tables, newly computed statistics, charts and written findings. **No repository source file or data file was modified.** Every table here was produced by running the existing code in memory (`player_ratings.py` as it stands in the working tree) and reading its outputs.
+This folder holds the audit of the SupeRR pressure-rating pipeline: extracted tables, newly computed statistics, charts and written findings. The readout scripts never write outside this folder. Every table here was produced by running `player_ratings.py`, as it stands in the working tree, in memory and reading its outputs.
+
+**Super overs are included.** This was changed in `player_ratings.py` at the user's request; every commit up to `7af5382` drops them. The data has 38 super-over deliveries (33 legal balls) in 6 matches, stored as innings 3 and 4.
+
+- **Phase:** every super-over ball is a death ball.
+- **Occasion:** max(stage occasion, 1.5), so a super over is never below knockout level, even in a dead rubber. A semi-final or final super over keeps 2.0 or 3.0.
+- **Chase:** the second super over chases the first super over's total plus one.
+
+`08_validation/ablation_summary.csv` compares the official run with the same pipeline run without super overs (`exclude_super_overs`).
 
 ## Version under audit
 
@@ -16,9 +24,10 @@ This folder holds the audit of the SupeRR pressure-rating pipeline: extracted ta
   | Peers | 0.10 |
   | Consistency | 0.10 |
 
-- **The brief describes eight terms** (Form 0.05, consistency 0.05). That is the version committed at git HEAD `29956ed`. Form was removed in the previous session at the user's request. Form is therefore reported as **NOT_APPLICABLE**.
-- **The 8-term model was re-run read-only from git HEAD** on the same data. It appears as `legacy_8_term_with_form` wherever a comparison is useful, for example the 12/5/3 role split, which reproduces only there.
+- **The brief describes eight terms** (Form 0.05, consistency 0.05). That is the version at git `29956ed`. Form was removed at the user's request, committed in `7af5382`. Form is therefore reported as **NOT_APPLICABLE**.
+- **The 8-term scoring functions were re-run read-only from `29956ed`** on the same legal frame, with super overs included, so the comparison isolates Form. The commit is pinned in `run_pipeline.py`, so later commits do not change it. It appears as `legacy_8_term_with_form` wherever a comparison is useful, for example the 12/5/3 role split, which reproduces only there.
 - **The in-memory run reproduces the shipped `ratings/batters.csv` and `ratings/bowlers.csv` exactly**: max composite gap 2e-16, identical ranks, 216 ranked batters and 226 ranked bowlers.
+- **The no-super-over comparison run reproduces the earlier ratings exactly**, the ones from before super overs were included (max composite gap 0).
 
 ## Status labels
 
@@ -38,6 +47,7 @@ Diagnostics that show the size of a documented bug, such as `diagnostic_runofpla
 01_dataset/                 cleaning_summary, delivery_classification, dismissal_classification, cleaning_assumptions, dls_summary
 02_pressure/                pressure_summary, pressure_percentiles, pressure_band_summary, phase_bowling_pressure, pressure_observations
                             + pressure_formula_as_executed.csv (extra: formula with the executed scales)
+                            + super_over_pressure.csv (extra: every legal super-over ball with its pressure terms)
 03_components/              component_definitions, component_summary, batter_component_scores, bowler_component_scores, component_contributions
 04_elo/                     elo_summary, batter_elo_history, bowler_elo_history, elo_stability
 05_expectation_models/      xruns_calibration_deciles, xwickets_calibration_deciles, expectation_model_metrics, xruns_predictions, xwickets_predictions
@@ -59,7 +69,7 @@ _cache/                     pickled pipeline frames and per-script facts (git-ig
 Run from `research_readout/_scripts/`:
 
 ```
-python run_pipeline.py                 # runs player_ratings in memory; also loads the 8-term model from git HEAD
+python run_pipeline.py                 # runs player_ratings in memory, a no-super-over run, and the 8-term model from git 29956ed
 python a_dataset_pressure.py           # 01, 02 (and the replication of the shock / run-of-play terms)
 python b_components_elo_models.py      # 03, 04, 05 (includes the Elo step-size diagnostic)
 python c_shock_rankings_validation.py  # 06, 07, 08 (includes the ball-19 bug-free diagnostic)

@@ -1,21 +1,21 @@
 scope,legal_ball_n,over,batter_out_id,striker,bowler,dismissal,score_at_fall,shock_bat_on_ball,shock_bat_next_ball,count_shock_bat_next_ball,max_shock_bat_next6,pressure_bat_next_ball,high_band_balls_next6,next6_balls,status,metric,value
-"IPL 2025 final, innings 2",30.0,5.7,25669.0,Priyansh Arya,Josh Hazlewood,Caught,43/1,-0.3715344640147943,1.0,0.38,1.0,3.2,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",51.0,9.3,7216.0,Prabhsimran Singh,Krunal Pandya,Caught,72/2,-0.4054879539574513,1.0,0.38,1.0,3.2,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",58.0,10.4,3647.0,Shreyas Iyer,Romario Shepherd,Caught,79/3,-0.3917719668271614,1.0,0.43000000000000005,1.0,2.8692369502623816,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",73.0,13.1,4736.0,Josh Inglis,Krunal Pandya,Caught,98/4,-0.39424276659720214,1.0,0.43000000000000005,1.0,2.8692369502623816,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",30.0,5.7,25669.0,Priyansh Arya,Josh Hazlewood,Caught,43/1,-0.3716275825512172,1.0,0.38,1.0,3.2,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",51.0,9.3,7216.0,Prabhsimran Singh,Krunal Pandya,Caught,72/2,-0.40554568486281983,1.0,0.38,1.0,3.2,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",58.0,10.4,3647.0,Shreyas Iyer,Romario Shepherd,Caught,79/3,-0.39183301522544944,1.0,0.43000000000000005,1.0,2.8692369502623816,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",73.0,13.1,4736.0,Josh Inglis,Krunal Pandya,Caught,98/4,-0.39427526133016944,1.0,0.43000000000000005,1.0,2.8692369502623816,6.0,6.0,COMPUTED,,
 "IPL 2025 final, innings 2",98.0,17.2,7059.0,Nehal Wadhera,Bhuvneshwar Kumar,Caught,136/5,-0.4,1.0,0.43000000000000005,1.0,5.0,6.0,6.0,COMPUTED,,
 "IPL 2025 final, innings 2",100.0,17.4,2639.0,Marcus Stoinis,Bhuvneshwar Kumar,Caught,142/6,1.0,1.0,0.7100000000000001,1.0,5.0,6.0,6.0,COMPUTED,,
 "IPL 2025 final, innings 2",104.0,18.2,6676.0,Azmatullah Omarzai,Yash Dayal,Caught,145/7,1.0,1.0,0.7100000000000001,1.0,5.0,6.0,6.0,COMPUTED,,
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_balls_within_6_after_a_wicket,0.27531027170862526
-all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_within_6_after_wicket,0.7644649160893285
-all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_otherwise,0.00017928986868810017
-all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_within_6_after_wicket,0.9469568518015961
-all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_otherwise,-0.3658982875687659
-all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bowl_after_six_in_last_6,0.8268812302278745
-all innings,,,,,,,,,,,,,,,COMPUTED,strike_rate_within_6_after_wicket,116.30264474354861
-all innings,,,,,,,,,,,,,,,COMPUTED,strike_rate_otherwise,148.19168238441182
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_balls_within_6_after_a_wicket,0.27531502507209854
+all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_within_6_after_wicket,0.7643206311458393
+all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_otherwise,0.00017926030029685505
+all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_within_6_after_wicket,0.9467767836207024
+all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_otherwise,-0.3658461342784045
+all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bowl_after_six_in_last_6,0.8269017944680718
+all innings,,,,,,,,,,,,,,,COMPUTED,strike_rate_within_6_after_wicket,116.28635600098146
+all innings,,,,,,,,,,,,,,,COMPUTED,strike_rate_otherwise,148.19377321420887
 all innings,,,,,,,,,,,,,,,COMPUTED,share_of_batter_high_band_balls_within_6_after_wicket,0.9993830359566644
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_with_four_or_six_in_last_6,0.9998181014993633
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_zero_band_balls_with_four_or_six_in_last_6,0.35695162729687013
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_charged_runs_above_xr_last_6,0.9981290439934517
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_all_balls_charged_runs_above_xr_last_6,0.4341205330228884
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_with_four_or_six_in_last_6,0.9997921538061835
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_zero_band_balls_with_four_or_six_in_last_6,0.35693320001290196
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_charged_runs_above_xr_last_6,0.9981293842556508
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_all_balls_charged_runs_above_xr_last_6,0.4340616799605082

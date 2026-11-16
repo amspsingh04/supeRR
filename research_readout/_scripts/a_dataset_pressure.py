@@ -27,8 +27,10 @@ add("silver_deliveries", len(balls), source=S_BALLS, notes="cleaning keeps every
 add("rows_deleted_in_cleaning", len(raw_balls) - len(balls), source="raw vs silver row count")
 dup = int(balls.duplicated(["match_id", "innings", "innings_ball_num"]).sum())
 add("duplicate_delivery_keys_match_innings_ballnum", dup, source=S_BALLS)
-add("super_over_deliveries_dropped", int(balls["is_super_over"].astype(bool).sum()), source=S_BALLS, notes="innings 3 and above")
-add("non_super_over_deliveries", len(work), source="add_situation work frame")
+add("super_over_deliveries_included", int(balls["is_super_over"].astype(bool).sum()), source=S_BALLS, notes="innings 3 and 4; kept in every rating")
+add("super_over_legal_balls_included", int(legal["is_super_over"].sum()), source="add_situation legal frame")
+add("super_over_matches", int(legal.loc[legal["is_super_over"], "match_id"].nunique()), source="add_situation legal frame")
+add("deliveries_in_work_frame", len(work), source="add_situation work frame")
 add("illegal_deliveries_wide_noball_other", int((~work["is_legal"]).sum()), source="add_situation work frame")
 add("legal_balls_used_in_ratings", len(legal), source="add_situation legal frame")
 for label, count in work.loc[~work["is_legal"], "extras_label"].value_counts().items():
@@ -38,7 +40,7 @@ add("matches_with_deliveries", int(balls["match_id"].nunique()), source=S_BALLS)
 add("matches_with_legal_balls", int(legal["match_id"].nunique()), source="legal frame")
 add("matches_in_matches_csv_without_deliveries", int(len(set(raw_matches["match_id"]) - set(balls["match_id"]))), source="matches.csv vs ball_by_ball")
 add("competitions_with_legal_balls", int(legal["comp_id"].nunique()), source="legal frame")
-add("innings_non_super_over", int(work.groupby(["match_id", "innings"]).ngroups), source="work frame")
+add("innings_including_super_overs", int(work.groupby(["match_id", "innings"]).ngroups), source="work frame")
 add("first_match_date", str(legal["match_date"].min().date()), source="legal frame")
 add("last_match_date", str(legal["match_date"].max().date()), source="legal frame")
 add("unique_batters_faced_legal_ball", int(legal["striker_id"].nunique()), source="legal frame")
@@ -78,11 +80,12 @@ dead = legal.loc[legal["occasion"].eq(0.4), "match_id"].nunique()
 add("dead_rubber_matches_occasion_0_4", int(dead), source="legal frame occasion column")
 cleaning = pd.DataFrame(rows)
 reg.save(cleaning, "01_dataset/cleaning_summary.csv", "silver CSVs, raw CSVs, add_situation frames", "counts on the frames the pipeline builds")
-for key in ["raw_deliveries_source_file", "super_over_deliveries_dropped", "illegal_deliveries_wide_noball_other",
+for key in ["raw_deliveries_source_file", "super_over_deliveries_included", "super_over_legal_balls_included", "super_over_matches",
+            "illegal_deliveries_wide_noball_other",
             "legal_balls_used_in_ratings", "matches_with_legal_balls", "duplicate_delivery_keys_match_innings_ballnum",
             "unique_batters_faced_legal_ball", "unique_bowlers_bowled_legal_ball", "dead_rubber_matches_occasion_0_4",
             "first_match_date", "last_match_date", "overs_with_more_than_6_legal_balls", "deliveries_flagged_sheet_gap",
-            "innings_non_super_over", "matches_no_result_no_winner"]:
+            "innings_including_super_overs", "matches_no_result_no_winner"]:
     reg.fact("ds_" + key, cleaning.loc[cleaning["metric"].eq(key), "value"].iloc[0])
 for ladder in ["IPL", "T20I", "T20"]:
     reg.fact(f"ds_legal_{ladder}", int(legal["ladder"].eq(ladder).sum()))
@@ -104,7 +107,7 @@ CHARGE = {
 }
 dc = []
 for label, frame in balls.groupby(balls["extras_label"].fillna("ordinary")):
-    nso = frame.loc[~frame["is_super_over"].astype(bool)]
+    nso = frame
     wk_label = work.loc[work["extras_label"].fillna("ordinary").eq(label)]
     dc.append({
         "extras_label": label,
@@ -146,7 +149,7 @@ for dtype in wk_all["dismissal_type"].fillna("(blank)").value_counts().index:
         "dismissal_type": dtype,
         "count_all": len(a),
         "count_super_over": int(a["is_super_over"].astype(bool).sum()),
-        "count_used_non_super_over": len(u),
+        "count_used": len(u),
         "on_illegal_delivery": int((~u["is_legal"]).sum()),
         "on_legal_ball": len(lg),
         "striker_dismissed_on_legal_ball": int(lg["striker_out"].sum()),
@@ -170,7 +173,8 @@ reg.fact("ds_nonstriker_dismissals_legal", int((legal["wicket_flag"].eq(1) & ~le
 
 assumptions = pd.DataFrame([
     ("Legal ball", "wide, no-ball (Overstep) and 'other' extras are illegal; bye, leg-bye, penalty and ordinary balls are legal", "data_cleaning.ipynb cell 10; ILLEGAL list", f"'other' counted legal would put 150 innings past 120 legal balls (data_exploration.ipynb); with it illegal the max is {int(legal_per_innings.max())}"),
-    ("Super overs", "innings 3 and above are super overs and are dropped from every rating", "data_cleaning.ipynb cell 10; add_situation", f"{int(balls['is_super_over'].astype(bool).sum())} deliveries"),
+    ("Super overs", "innings 3 and 4 are super overs and are kept in every rating. Each super-over ball is a death ball; occasion is max(stage occasion, 1.5), so a dead rubber or league super over counts as a knockout and a semi-final or final keeps 2 or 3; the second super over chases the first super over's total + 1",
+     "data_cleaning.ipynb cell 10; add_situation; SUPER_OVER_OCCASION", f"{int(balls['is_super_over'].astype(bool).sum())} deliveries, {int(legal['is_super_over'].sum())} legal balls, {int(legal.loc[legal['is_super_over'], 'match_id'].nunique())} matches"),
     ("Ball order", "innings_ball_num is the ball sequence; rows sorted by match, innings, innings_ball_num", "data_cleaning.ipynb cell 10", f"duplicate keys: {dup}"),
     ("Season", "split seasons (2022/23 etc.) take the earlier year", "data_cleaning.ipynb cell 4", "seasons 2022-2026"),
     ("Competition group", "IPL by name prefix, T20I by match_format, everything else Other T20", "data_cleaning.ipynb cell 4", "Other T20 = Emerging Teams Asia Cup 2024 and Asia Cup Rising Stars 2025"),
@@ -180,8 +184,8 @@ assumptions = pd.DataFrame([
     ("Bowler wicket", "Caught, Bowled, LBW, Stump, Hit Wicket credit the bowler; run outs, retired out, obstructing do not", "data_cleaning.ipynb BOWLER_WICKETS", ""),
     ("Extras charged to bowler", "wide: all runs; no-ball/other: extras1 + bat runs; byes, leg-byes, penalty free", "add_situation conceded", ""),
     ("Reduced matches", "revised overs columns are ball counts; blank second innings copies the first; a blank both stays 120", "data_cleaning.ipynb cell 8", ""),
-    ("Chase target", "revised_target used as supplied; otherwise first-innings total + 1; reduced match without a target gets no required rate", "add_situation", ""),
-    ("Phases", "powerplay is ball <= round(0.3*length), death is ball > round(0.8*length) using legal-ball position", "_phase_labels", "full innings: balls 1-36, 37-96, 97-120"),
+    ("Chase target", "revised_target used as supplied; otherwise first-innings total + 1; reduced match without a target gets no required rate; the second super over (innings 4) chases the first super over's total + 1", "add_situation", ""),
+    ("Phases", "powerplay is ball <= round(0.3*length), death is ball > round(0.8*length) using legal-ball position; every super-over ball is death", "_phase_labels; add_situation", "full innings: balls 1-36, 37-96, 97-120"),
     ("Batting role", "modal batting order: 1-3 top, 4-6 middle, 7+ lower", "_batting_role", ""),
     ("Bowling arm", "modal pace_or_spin over legal balls", "score_bowlers", ""),
     ("Duplicated playing-list rows", "40 duplicate (match, team, player) rows collapsed; conflicting batting orders blanked", "data_cleaning.ipynb cell 12", f"order conflicts: {int(silver_squad['order_conflict'].sum())}"),
@@ -211,6 +215,8 @@ dls = [
     metric_row("second_innings_balls_rrr_ge_8", int(chase["rrr"].ge(8).sum()), source="legal frame"),
     metric_row("second_innings_balls_rrr_ge_12", int(chase["rrr"].ge(12).sum()), source="legal frame"),
     metric_row("legal_balls_in_reduced_matches", int(legal["is_reduced"].fillna(False).astype(bool).sum()), source="legal frame"),
+    metric_row("super_over_chase_legal_balls", int(legal["innings"].eq(4).sum()), source="legal frame"),
+    metric_row("super_over_chase_balls_with_required_rate", int(legal.loc[legal["innings"].eq(4), "rrr"].notna().sum()), source="legal frame"),
 ]
 for value, count in reduced["first_innings_balls"].value_counts().sort_index().items():
     dls.append(metric_row(f"reduced_first_innings_length_{int(value)}_balls", int(count), source="silver/matches.csv"))
@@ -451,6 +457,26 @@ o("pressure_bowl_pace_p80_cutoff", float(cut["bowler_pace"][1]))
 o("pressure_bowl_spin_p80_cutoff", float(cut["bowler_spin"][1]))
 for k, v in checks.items():
     o("replication_max_abs_gap_" + k, v, "readout recomputation of the shock and run-of-play terms vs pipeline columns")
+so = L["is_super_over"]
+o("super_over_legal_balls", int(so.sum()))
+o("super_over_mean_occasion", float(L.loc[so, "occasion"].mean()))
+o("super_over_mean_pressure_bat", float(L.loc[so, "pressure_bat"].mean()))
+o("super_over_mean_pressure_bowl", float(L.loc[so, "pressure_bowl"].mean()))
+o("super_over_share_in_batter_high_band", float(L.loc[so, "band"].eq("high").mean()), "shock and run of play start at zero in a new innings, so no super-over ball reaches the top fifth")
+o("super_over_share_in_bowler_high_band", float(L.loc[so, "band_bowl"].eq("high").mean()))
+o("super_over_share_in_batter_medium_band", float(L.loc[so, "band"].eq("medium").mean()))
+o("super_over_max_pressure_bat_vs_p80_cutoff", float(L.loc[so, "pressure_bat"].max() - cut["batter"][1]), "negative: the highest super-over ball is still below the high cut")
+knock = L["stage"].isin(["Qualifier", "Eliminator", "Semi Final", "Final"]) & ~so
+o("knockout_match_mean_pressure_bat_excluding_super_overs", float(L.loc[knock, "pressure_bat"].mean()))
+o("knockout_match_share_in_batter_high_band", float(L.loc[knock, "band"].eq("high").mean()))
+o("death_overs_mean_pressure_bat_excluding_super_overs", float(L.loc[L["phase"].eq("death") & ~so, "pressure_bat"].mean()))
+so_cols = ["match_id", "comp_name", "stage", "innings", "n", "striker_name", "bowler_name", "bat_runs", "striker_out", "bowler_wicket",
+           "occasion", "competition", "ball_bat", "ball_bowl", "rrr", "shock_bat", "shock_bowl", "delta_bat", "delta_bowl",
+           "pressure_bat", "pressure_bowl", "band", "band_bowl", "x_runs", "x_wicket", "e_bat", "e_bowl"]
+so_balls = L.loc[so, so_cols].copy()
+so_balls["status"] = "COMPUTED"
+reg.save(so_balls, "02_pressure/super_over_pressure.csv", "legal frame after fit_elo, innings 3 and 4",
+         "every legal super-over ball with its pressure terms and band")
 obs = pd.DataFrame(obs)
 reg.save(obs, "02_pressure/pressure_observations.csv", "legal frame after fit_elo", "derived shares and correlations")
 for _, r in obs.iterrows():

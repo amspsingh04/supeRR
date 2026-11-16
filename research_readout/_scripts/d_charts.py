@@ -38,15 +38,15 @@ def foot(ax, text, y=-0.27):
 
 # slide 02 dataset
 cs = pd.read_csv(OUT / "01_dataset/cleaning_summary.csv").set_index("metric")["value"]
-vals = [int(cs["silver_deliveries"]), int(cs["super_over_deliveries_dropped"]), int(cs["illegal_deliveries_wide_noball_other"]), int(cs["legal_balls_used_in_ratings"])]
+vals = [int(cs["silver_deliveries"]), int(cs["illegal_deliveries_wide_noball_other"]), int(cs["legal_balls_used_in_ratings"]), int(cs["super_over_legal_balls_included"])]
 fig, ax = plt.subplots(figsize=(8, 4))
-labels = ["All deliveries", "Super-over\ndeliveries dropped", "Wides, no-balls,\n'other' (not legal)", "Legal balls\nused in ratings"]
-bars = ax.bar(labels, vals, color=[C["grey"], "#d9d9d9", "#d9d9d9", C["bat"]])
+labels = ["All deliveries", "Wides, no-balls,\n'other' (not legal)", "Legal balls\nused in ratings", "of which\nsuper-over balls"]
+bars = ax.bar(labels, vals, color=[C["grey"], "#d9d9d9", C["bat"], C["bowl"]])
 for b, v in zip(bars, vals):
     ax.text(b.get_x() + b.get_width() / 2, v, f"{v:,}", ha="center", va="bottom", fontsize=10)
 ax.set_ylabel("Deliveries")
 ax.set_title("From raw deliveries to legal balls")
-foot(ax, "Source: silver/ball_by_ball.csv via player_ratings.add_situation. No delivery is deleted in cleaning; super overs and illegal deliveries are excluded from ratings.")
+foot(ax, f"Source: silver/ball_by_ball.csv via player_ratings.add_situation. No delivery is deleted in cleaning; illegal deliveries are excluded from ball value.\nSuper overs are kept: {int(cs['super_over_deliveries_included'])} deliveries in {int(cs['super_over_matches'])} matches.")
 save(fig, "slide_02_dataset", "cleaning_funnel.png", "01_dataset/cleaning_summary.csv", "bar")
 
 tab = legal.groupby(["season", "ladder"]).size().unstack().reindex(columns=["IPL", "T20I", "T20"]).fillna(0)
@@ -60,7 +60,7 @@ for x, t in zip(tab.index.astype(str), bottom):
 ax.set_ylabel("Legal balls")
 ax.set_title("Legal balls by season and ladder")
 ax.legend(frameon=False, fontsize=9)
-foot(ax, "Source: legal frame (192,412 legal balls). Seasons use the earlier year of split seasons.")
+foot(ax, f"Source: legal frame ({len(legal):,} legal balls, super overs included). Seasons use the earlier year of split seasons.")
 save(fig, "slide_02_dataset", "legal_balls_by_season_ladder.png", "legal frame", "stacked bar")
 
 # slide 03 pressure
@@ -75,6 +75,25 @@ ax.set_ylabel("Legal balls")
 ax.set_title("Batter pressure distribution and band cut-offs")
 foot(ax, "Zero band < p50 <= medium < p80 <= high. Source: legal frame after fit_elo.")
 save(fig, "slide_03_pressure", "batter_pressure_histogram.png", "02_pressure/pressure_percentiles.csv", "histogram")
+
+sop = pd.read_csv(OUT / "02_pressure/super_over_pressure.csv")
+sop["label"] = sop["match_id"].astype(str) + " " + sop["stage"] + " inn " + sop["innings"].astype(str)
+order = list(dict.fromkeys(sop["label"]))
+fig, ax = plt.subplots(figsize=(9, 4.2))
+for i, lab in enumerate(order):
+    part = sop.loc[sop["label"].eq(lab)]
+    ax.scatter(np.full(len(part), i) + np.linspace(-0.2, 0.2, len(part)), part["pressure_bat"], color=C["bat"], s=28, zorder=3)
+ax.axhline(p50, color="black", ls=":", lw=1)
+ax.axhline(p80, color="black", ls="--", lw=1)
+ax.text(len(order) - 0.5, p80 + 0.04, f"high cut p80 = {p80:.3f}", fontsize=8, ha="right", va="bottom")
+ax.text(len(order) - 0.5, p50 + 0.04, f"medium cut p50 = {p50:.3f}", fontsize=8, ha="right", va="bottom")
+ax.set_xticks(range(len(order)))
+ax.set_xticklabels(order, rotation=30, ha="right", fontsize=8)
+ax.set_ylim(min(-0.1, sop["pressure_bat"].min() - 0.1), p80 + 0.4)
+ax.set_ylabel("Batter pressure")
+ax.set_title("Super-over balls: knockout occasion, but no shock yet")
+foot(ax, "Each dot is a legal super-over ball. Occasion = max(stage occasion, 1.5); death phase; chase rate in innings 4. Shock and run of play reset at the start\nof the innings, so every super-over ball sits in the medium band. Source: 02_pressure/super_over_pressure.csv.", y=-0.45)
+save(fig, "slide_03_pressure", "super_over_pressure.png", "02_pressure/super_over_pressure.csv", "strip plot")
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
 for ax, arm in zip(axes, ["Pace", "Spin"]):
@@ -242,7 +261,7 @@ x = np.arange(len(COMPONENTS))
 cur = [WEIGHTS[c] for c in COMPONENTS]
 leg = [LEGACY_WEIGHTS[c] for c in COMPONENTS]
 axes[0].bar(x - 0.2, cur, 0.4, color=C["bat"], label="current (7 terms)")
-axes[0].bar(x + 0.2, leg, 0.4, color=C["grey"], label="git HEAD (8 terms, Form 0.05 not shown)")
+axes[0].bar(x + 0.2, leg, 0.4, color=C["grey"], label="git 29956ed (8 terms, Form 0.05 not shown)")
 axes[0].set_xticks(x, [LABEL[c] for c in COMPONENTS], rotation=35, ha="right")
 axes[0].set_ylabel("Nominal weight")
 axes[0].set_title("Composite weights")

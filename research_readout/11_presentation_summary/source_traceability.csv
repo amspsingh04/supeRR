@@ -1,39 +1,40 @@
 kind,metric,value,output,column_or_filter,status,rows,source,method
-headline,legal balls used,192412,01_dataset/cleaning_summary.csv,legal_balls_used_in_ratings,COMPUTED,,,
+headline,legal balls used,192445,01_dataset/cleaning_summary.csv,legal_balls_used_in_ratings,COMPUTED,,,
 headline,ranked batters / bowlers,216 / 226,07_rankings/final_*_rankings.csv,rows,COMPUTED,,,
 headline,batter band p80,1.9192369502623816,02_pressure/pressure_band_summary.csv,p80_cutoff,COMPUTED,,,
-headline,pace band p80,1.446025473775747,02_pressure/pressure_band_summary.csv,p80_cutoff,COMPUTED,,,
-headline,spin band p80,1.4596077804559404,02_pressure/pressure_band_summary.csv,p80_cutoff,COMPUTED,,,
+headline,pace band p80,1.4457822524985138,02_pressure/pressure_band_summary.csv,p80_cutoff,COMPUTED,,,
+headline,spin band p80,1.4594770839008306,02_pressure/pressure_band_summary.csv,p80_cutoff,COMPUTED,,,
 headline,batter high band within 6 balls of a wicket,0.9993830359566644,06_shock/shock_event_summary.csv,value,COMPUTED,,,
-headline,bowler high band after a four/six,0.9998181014993633,06_shock/shock_event_summary.csv,value,COMPUTED,,,
+headline,bowler high band after a four/six,0.9997921538061835,06_shock/shock_event_summary.csv,value,COMPUTED,,,
 headline,Elo steps used,4/16/20 (not halved),04_elo/elo_summary.csv,step_sizes,COMPUTED,,,
-headline,Elo batter min/max/sd,931.0/2571.9/141.8,04_elo/elo_summary.csv,value,COMPUTED,,,
-headline,Elo bowler min/max/sd,1060.0/2107.9/117.5,04_elo/elo_summary.csv,value,COMPUTED,,,
-headline,xR MAE/RMSE/slope/intercept,1.3043/1.7306/0.9845/0.0349,05_expectation_models/expectation_model_metrics.csv,scope=all,COMPUTED,,,
-headline,xW AUC/Brier/logit slope/intercept,0.5593/0.05021/0.8060/-0.5215,05_expectation_models/expectation_model_metrics.csv,scope=all,COMPUTED,,,
+headline,Elo batter min/max/sd,931.5/2571.6/141.8,04_elo/elo_summary.csv,value,COMPUTED,,,
+headline,Elo bowler min/max/sd,1059.8/2136.6/118.0,04_elo/elo_summary.csv,value,COMPUTED,,,
+headline,xR MAE/RMSE/slope/intercept,1.3043/1.7305/0.9845/0.0349,05_expectation_models/expectation_model_metrics.csv,scope=all,COMPUTED,,,
+headline,xW AUC/Brier/logit slope/intercept,0.5597/0.05025/0.8112/-0.5057,05_expectation_models/expectation_model_metrics.csv,scope=all,COMPUTED,,,
 headline,IPL 2025 final wickets (legal ball),"[30, 51, 58, 73, 98, 100, 104]",06_shock/shock_innings_timeline.csv,is_wicket,COMPUTED,,,
 headline,top-20 roles with split (current),"[6, 7, 7]",08_validation/role_ranking_representation.csv,top_k=20,COMPUTED,,,
-headline,top-20 roles pooled (current),"[13, 6, 1]",08_validation/role_ranking_representation.csv,top_k=20,COMPUTED,,,
+headline,top-20 roles pooled (current),"[14, 6, 0]",08_validation/role_ranking_representation.csv,top_k=20,COMPUTED,,,
 headline,top-20 roles pooled (legacy 8-term),"[12, 5, 3]",08_validation/role_ranking_representation.csv,top_k=20,COMPUTED,,,
 headline,Form weight (current),removed,player_ratings.py,weights block,NOT_APPLICABLE,,,
 headline,DLS par / resources,not in data,01_dataset/dls_summary.csv,,REQUIRES_DATA,,,
 headline,rank uncertainty intervals,not computed,,,REQUIRES_IMPLEMENTATION,,,
 headline,external validation (selections/awards),no data,,,REQUIRES_DATA,,,
-output file,,,01_dataset/cleaning_summary.csv,,COMPUTED,65.0,"silver CSVs, raw CSVs, add_situation frames",counts on the frames the pipeline builds
+output file,,,01_dataset/cleaning_summary.csv,,COMPUTED,67.0,"silver CSVs, raw CSVs, add_situation frames",counts on the frames the pipeline builds
 output file,,,01_dataset/delivery_classification.csv,,COMPUTED,7.0,silver/ball_by_ball.csv via player_ratings.load(); add_situation conceded,group by extras_label
 output file,,,01_dataset/dismissal_classification.csv,,COMPUTED,8.0,silver/ball_by_ball.csv via player_ratings.load(); legal frame striker_out and bowler_wicket,group by dismissal_type
 output file,,,01_dataset/cleaning_assumptions.csv,,COMPUTED,18.0,data_cleaning.ipynb and player_ratings.py source,read from code
-output file,,,01_dataset/dls_summary.csv,,COMPUTED,28.0,silver/matches.csv; legal frame,counts
+output file,,,01_dataset/dls_summary.csv,,COMPUTED,30.0,silver/matches.csv; legal frame,counts
 output file,,,02_pressure/pressure_summary.csv,,COMPUTED,16.0,legal frame after fit_elo; shock parts replicated from player_ratings formulas,"describe(); variance share = cov(part, total)/var(total)"
 output file,,,02_pressure/pressure_formula_as_executed.csv,,COMPUTED,14.0,player_ratings.py source + scales recomputed from data,read from code; scales replicated (max gap in facts)
 output file,,,02_pressure/pressure_percentiles.csv,,COMPUTED,99.0,legal frame after fit_elo,Series.quantile (linear)
 output file,,,02_pressure/pressure_band_summary.csv,,COMPUTED,9.0,legal frame after fit_elo; exports/08_band_cutoffs.csv,band labels from the pipeline; cutoffs recomputed
 output file,,,02_pressure/phase_bowling_pressure.csv,,COMPUTED,6.0,legal frame after fit_elo,group by phase x pace_or_spin
-output file,,,02_pressure/pressure_observations.csv,,COMPUTED,37.0,legal frame after fit_elo,derived shares and correlations
-output file,,,03_components/component_definitions.csv,,COMPUTED,8.0,player_ratings.py (working tree) and git HEAD,read from code
+output file,,,02_pressure/super_over_pressure.csv,,COMPUTED,33.0,"legal frame after fit_elo, innings 3 and 4",every legal super-over ball with its pressure terms and band
+output file,,,02_pressure/pressure_observations.csv,,COMPUTED,48.0,legal frame after fit_elo,derived shares and correlations
+output file,,,03_components/component_definitions.csv,,COMPUTED,8.0,player_ratings.py (working tree) and git 29956ed,read from code
 output file,,,03_components/component_summary.csv,,COMPUTED,48.0,ratings tables from score_batters/score_bowlers,describe by population
-output file,,,03_components/batter_component_scores.csv,,COMPUTED,888.0,score_batters table + TRACES math + git HEAD legacy scoring,join on player_id
-output file,,,03_components/bowler_component_scores.csv,,COMPUTED,647.0,score_bowlers table + TRACES math + git HEAD legacy scoring,join on player_id
+output file,,,03_components/batter_component_scores.csv,,COMPUTED,888.0,score_batters table + TRACES math + git 29956ed legacy scoring,join on player_id
+output file,,,03_components/bowler_component_scores.csv,,COMPUTED,647.0,score_bowlers table + TRACES math + git 29956ed legacy scoring,join on player_id
 output file,,,03_components/component_contributions.csv,,COMPUTED,442.0,ratings tables,weight x z per component for ranked players
 output file,,,04_elo/batter_elo_history.csv,,COMPUTED,7647.0,legal frame after fit_elo (batter_rating_after),"per-ball path; before = previous after in the same ladder, start 1500"
 output file,,,04_elo/bowler_elo_history.csv,,COMPUTED,5133.0,legal frame after fit_elo (bowler_rating_after),same
@@ -43,33 +44,34 @@ output file,,,05_expectation_models/xruns_calibration_deciles.csv,,COMPUTED,80.0
 output file,,,05_expectation_models/xwickets_calibration_deciles.csv,,COMPUTED,80.0,legal frame after fit_elo,deciles of the prediction (rank-based qcut)
 output file,,,05_expectation_models/expectation_model_metrics.csv,,COMPUTED,36.0,legal frame after fit_elo,ball-level metrics; OLS and logistic recalibration
 output file,,,05_expectation_models/residual_by_wickets_fallen.csv,,COMPUTED,19.0,legal frame after fit_elo,group by wickets_before bucket x phase
-output file,,,05_expectation_models/xruns_predictions.csv,,COMPUTED,192412.0,legal frame after fit_elo,"per-ball predictions as produced inside run_elo (sequential, past balls only)"
-output file,,,05_expectation_models/xwickets_predictions.csv,,COMPUTED,192412.0,legal frame after fit_elo,same
+output file,,,05_expectation_models/xruns_predictions.csv,,COMPUTED,192445.0,legal frame after fit_elo,"per-ball predictions as produced inside run_elo (sequential, past balls only)"
+output file,,,05_expectation_models/xwickets_predictions.csv,,COMPUTED,192445.0,legal frame after fit_elo,same
 output file,,,06_shock/shock_innings_timeline.csv,,COMPUTED,120.0,legal frame after fit_elo (match 40767 innings 2) + replicated count/excess split,every legal ball of the IPL 2025 final chase
 output file,,,06_shock/shock_event_summary.csv,,COMPUTED,20.0,legal frame + replicated shock split,per wicket of the final chase; dataset-wide after-wicket comparison
 output file,,,06_shock/shock_parameters.csv,,COMPUTED,22.0,player_ratings.py source; scales recomputed in section 02,read from code + replicated
-output file,,,07_rankings/final_batter_rankings.csv,,COMPUTED,216.0,score_batters (current 7-term) + git HEAD 8-term for legacy columns,ranked players only
-output file,,,07_rankings/final_bowler_rankings.csv,,COMPUTED,226.0,score_bowlers (current 7-term) + git HEAD 8-term for legacy columns,ranked players only
+output file,,,07_rankings/final_batter_rankings.csv,,COMPUTED,216.0,score_batters (current 7-term) + git 29956ed 8-term for legacy columns,ranked players only
+output file,,,07_rankings/final_bowler_rankings.csv,,COMPUTED,226.0,score_bowlers (current 7-term) + git 29956ed 8-term for legacy columns,ranked players only
 output file,,,07_rankings/top10_batters.csv,,COMPUTED,10.0,final_batter_rankings,first 10
 output file,,,07_rankings/top10_bowlers.csv,,COMPUTED,10.0,final_bowler_rankings,first 10
 output file,,,07_rankings/top20_batters.csv,,COMPUTED,20.0,final_batter_rankings,first 20
 output file,,,07_rankings/top20_bowlers.csv,,COMPUTED,20.0,final_bowler_rankings,first 20
 output file,,,07_rankings/composite_distribution.csv,,COMPUTED,67.0,ratings tables,summary + 0.1-wide histogram bins
-output file,,,08_validation/ablation_batter_rank_changes.csv,,COMPUTED,216.0,ratings tables; git HEAD legacy; diagnostic rescoring,rank of each ranked batter under each variant (ties broken by player_id as in score_batters)
-output file,,,08_validation/ablation_bowler_rank_changes.csv,,COMPUTED,226.0,ratings tables; git HEAD legacy; diagnostic rescoring,same for bowlers
-output file,,,08_validation/ablation_summary.csv,,COMPUTED,27.0,ablation rank tables,"Spearman, Kendall tau-b, top-k overlap and Jaccard vs the official ranking"
-output file,,,08_validation/ablation_top_movers.csv,,COMPUTED,140.0,ablation rank tables,ten largest moves each way per comparison
-output file,,,08_validation/component_correlation_batters.csv,,COMPUTED,18.0,ratings tables (ranked players) + git HEAD form z,pairwise correlation matrix
-output file,,,08_validation/component_correlation_bowlers.csv,,COMPUTED,18.0,ratings tables (ranked players) + git HEAD form z,pairwise correlation matrix
+output file,,,08_validation/ablation_batter_rank_changes.csv,,COMPUTED,216.0,ratings tables; git 29956ed legacy; diagnostic rescoring,rank of each ranked batter under each variant (ties broken by player_id as in score_batters)
+output file,,,08_validation/ablation_bowler_rank_changes.csv,,COMPUTED,226.0,ratings tables; git 29956ed legacy; diagnostic rescoring,same for bowlers
+output file,,,08_validation/ablation_summary.csv,,COMPUTED,29.0,ablation rank tables,"Spearman, Kendall tau-b, top-k overlap and Jaccard vs the official ranking"
+output file,,,08_validation/ablation_top_movers.csv,,COMPUTED,180.0,ablation rank tables,ten largest moves each way per comparison
+output file,,,08_validation/component_correlation_batters.csv,,COMPUTED,18.0,ratings tables (ranked players) + git 29956ed form z,pairwise correlation matrix
+output file,,,08_validation/component_correlation_bowlers.csv,,COMPUTED,18.0,ratings tables (ranked players) + git 29956ed form z,pairwise correlation matrix
 output file,,,08_validation/component_influence.csv,,COMPUTED,14.0,ratings tables; ablation_summary,"nominal vs effective weight, variance share, drop-one effects"
 output file,,,08_validation/role_coverage.csv,,COMPUTED,5.0,ratings tables,eligibility counts by role
-output file,,,08_validation/role_ranking_representation.csv,,COMPUTED,20.0,ratings tables; _pooled_batter_order (current and git HEAD),role counts in top-k
+output file,,,08_validation/role_ranking_representation.csv,,COMPUTED,20.0,ratings tables; _pooled_batter_order (current and git 29956ed),role counts in top-k
 output file,,,08_validation/role_sample_distribution.csv,,COMPUTED,35.0,ratings tables,sample-size distribution by role
 output file,,,08_validation/sanity_check_players.csv,,COMPUTED,16.0,ratings tables; legacy; ablation; final Elo per ladder,one row per player and skill
 output file,,,08_validation/diagnostic_bowler_clutch_basis.csv,,COMPUTED,647.0,TRACES bowler math; legal frame,career economy with vs without wide/no-ball runs (the clutch comparison uses legal-ball spell economy)
 output file,,,10_charts/slide_02_dataset/cleaning_funnel.png,,COMPUTED,,01_dataset/cleaning_summary.csv,bar
 output file,,,10_charts/slide_02_dataset/legal_balls_by_season_ladder.png,,COMPUTED,,legal frame,stacked bar
 output file,,,10_charts/slide_03_pressure/batter_pressure_histogram.png,,COMPUTED,,02_pressure/pressure_percentiles.csv,histogram
+output file,,,10_charts/slide_03_pressure/super_over_pressure.png,,COMPUTED,,02_pressure/super_over_pressure.csv,strip plot
 output file,,,10_charts/slide_03_pressure/bowler_pressure_pace_spin.png,,COMPUTED,,02_pressure/pressure_band_summary.csv,histogram
 output file,,,10_charts/slide_03_pressure/phase_arm_high_share.png,,COMPUTED,,02_pressure/phase_bowling_pressure.csv,grouped bar
 output file,,,10_charts/slide_04_high_pressure_meaning/high_band_triggers.png,,COMPUTED,,06_shock/shock_event_summary.csv,bar
@@ -91,7 +93,7 @@ output file,,,10_charts/slide_13_component_correlations/correlation_bowlers.png,
 output file,,,10_charts/slide_14_roles/top20_role_composition.png,,COMPUTED,,08_validation/role_ranking_representation.csv,stacked bar
 output file,,,10_charts/slide_14_roles/role_coverage.png,,COMPUTED,,08_validation/role_coverage.csv,bar
 output file,,,10_charts/slide_15_limitations/ball19_bug_and_early_balls.png,,COMPUTED,,02_pressure replication,line
-output file,,,09_limitations/limitations_register.csv,,COMPUTED,22.0,facts from scripts a-d,one row per issue
+output file,,,09_limitations/limitations_register.csv,,COMPUTED,23.0,facts from scripts a-d,one row per issue
 output file,,,09_limitations/methodological_audit.md,,COMPUTED,,facts a-d,generated text
 output file,,,09_limitations/cricketing_interpretations.md,,COMPUTED,,facts a-d,generated text
 output file,,,08_validation/sanity_check_interpretations.md,,COMPUTED,,08_validation/sanity_check_players.csv,generated text

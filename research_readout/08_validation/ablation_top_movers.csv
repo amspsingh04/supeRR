@@ -1,141 +1,181 @@
 skill,player_name,role,full_current,comparison_rank,places_gained_in_full_model,comparison,direction,status
 batter,Rahmanullah Gurbaz,top order,40,182,142,full composite vs baseline only,risers in the full model,COMPUTED
 batter,Fakhar Zaman,top order,52,147,95,full composite vs baseline only,risers in the full model,COMPUTED
-batter,Washington Sundar,middle order,28,113,85,full composite vs baseline only,risers in the full model,COMPUTED
+batter,Washington Sundar,middle order,27,113,86,full composite vs baseline only,risers in the full model,COMPUTED
 batter,Shadab Khan,middle order,77,149,72,full composite vs baseline only,risers in the full model,COMPUTED
 batter,Azmatullah Omarzai,middle order,83,151,68,full composite vs baseline only,risers in the full model,COMPUTED
 batter,Ajinkya Rahane,top order,46,111,65,full composite vs baseline only,risers in the full model,COMPUTED
-batter,Brandon King,top order,75,140,65,full composite vs baseline only,risers in the full model,COMPUTED
+batter,Tashinga Musekiwa,lower order,92,157,65,full composite vs baseline only,risers in the full model,COMPUTED
 batter,Rassie van der Dussen,middle order,103,167,64,full composite vs baseline only,risers in the full model,COMPUTED
-batter,Tashinga Musekiwa,lower order,93,157,64,full composite vs baseline only,risers in the full model,COMPUTED
+batter,Brandon King,top order,75,139,64,full composite vs baseline only,risers in the full model,COMPUTED
 batter,Ramandeep Singh,middle order,45,107,62,full composite vs baseline only,risers in the full model,COMPUTED
-batter,Faf du Plessis,top order,191,61,-130,full composite vs baseline only,fallers in the full model,COMPUTED
-batter,Rovman Powell,middle order,188,70,-118,full composite vs baseline only,fallers in the full model,COMPUTED
+batter,Faf du Plessis,top order,190,61,-129,full composite vs baseline only,fallers in the full model,COMPUTED
+batter,Rovman Powell,middle order,187,69,-118,full composite vs baseline only,fallers in the full model,COMPUTED
 batter,Dhruv Jurel,top order,177,67,-110,full composite vs baseline only,fallers in the full model,COMPUTED
 batter,Shai Hope,top order,170,63,-107,full composite vs baseline only,fallers in the full model,COMPUTED
 batter,Nitish Rana,top order,196,99,-97,full composite vs baseline only,fallers in the full model,COMPUTED
-batter,Heinrich Klaasen,middle order,86,3,-83,full composite vs baseline only,fallers in the full model,COMPUTED
-batter,Rohit Sharma,top order,189,108,-81,full composite vs baseline only,fallers in the full model,COMPUTED
+batter,Heinrich Klaasen,middle order,85,3,-82,full composite vs baseline only,fallers in the full model,COMPUTED
+batter,Rohit Sharma,top order,188,108,-80,full composite vs baseline only,fallers in the full model,COMPUTED
 batter,Devon Conway,top order,161,85,-76,full composite vs baseline only,fallers in the full model,COMPUTED
 batter,Abdul Samad,lower order,117,45,-72,full composite vs baseline only,fallers in the full model,COMPUTED
-batter,Dewald Brevis,middle order,139,76,-63,full composite vs baseline only,fallers in the full model,COMPUTED
-batter,Scott Edwards,middle order,81,112,31,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+batter,Hardik Pandya,middle order,132,68,-64,full composite vs baseline only,fallers in the full model,COMPUTED
+batter,Scott Edwards,middle order,81,111,30,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 batter,Kartik Sharma,middle order,51,81,30,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
-batter,Jason Roy,top order,141,163,22,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
-batter,Mohammad Mahmudullah,middle order,133,153,20,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
-batter,Sai Sudharsan,top order,31,50,19,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+batter,Mohammad Mahmudullah,middle order,133,154,21,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+batter,Jason Roy,top order,141,162,21,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+batter,Sai Sudharsan,top order,31,49,18,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 batter,Shadab Khan,middle order,77,93,16,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 batter,Ambati Rayudu,middle order,116,131,15,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 batter,Shikhar Dhawan,top order,123,138,15,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 batter,Babar Azam,top order,131,146,15,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
-batter,Janith Liyanage,middle order,129,144,15,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+batter,Sarfaraz Khan,middle order,107,122,15,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 batter,Hasan Nawaz,middle order,156,120,-36,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 batter,Nurul Hasan,middle order,113,91,-22,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-batter,Ramandeep Singh,middle order,45,24,-21,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+batter,Shubham Dubey,lower order,54,33,-21,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 batter,M Shahrukh Khan,middle order,97,77,-20,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-batter,Shubham Dubey,lower order,54,34,-20,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+batter,Ramandeep Singh,middle order,45,25,-20,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 batter,Dhruv Jurel,top order,177,158,-19,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 batter,Rachin Ravindra,top order,159,141,-18,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-batter,Rahul Tripathi,top order,176,159,-17,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+batter,Abdul Samad,lower order,117,99,-18,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 batter,Shardul Thakur,lower order,147,130,-17,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-batter,Aniket Verma,middle order,112,95,-17,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+batter,Alishan Sharafu,top order,100,83,-17,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 batter,Axar Patel,lower order,42,138,96,role-split z vs pooled z,risers in the full model,COMPUTED
 batter,Jason Holder,lower order,102,175,73,role-split z vs pooled z,risers in the full model,COMPUTED
-batter,Corbin Bosch,lower order,100,169,69,role-split z vs pooled z,risers in the full model,COMPUTED
-batter,Tashinga Musekiwa,lower order,93,160,67,role-split z vs pooled z,risers in the full model,COMPUTED
+batter,Corbin Bosch,lower order,99,168,69,role-split z vs pooled z,risers in the full model,COMPUTED
+batter,Tashinga Musekiwa,lower order,92,160,68,role-split z vs pooled z,risers in the full model,COMPUTED
 batter,Abdul Samad,lower order,117,182,65,role-split z vs pooled z,risers in the full model,COMPUTED
 batter,Gudakesh Motie,lower order,70,133,63,role-split z vs pooled z,risers in the full model,COMPUTED
 batter,Marco Jansen,lower order,115,177,62,role-split z vs pooled z,risers in the full model,COMPUTED
 batter,Mitchell Santner,lower order,124,185,61,role-split z vs pooled z,risers in the full model,COMPUTED
 batter,Patrick Cummins,lower order,18,78,60,role-split z vs pooled z,risers in the full model,COMPUTED
-batter,Shubham Dubey,lower order,54,113,59,role-split z vs pooled z,risers in the full model,COMPUTED
+batter,Shubham Dubey,lower order,54,112,58,role-split z vs pooled z,risers in the full model,COMPUTED
 batter,Tim Seifert,top order,98,54,-44,role-split z vs pooled z,fallers in the full model,COMPUTED
-batter,Josh Inglis,top order,87,44,-43,role-split z vs pooled z,fallers in the full model,COMPUTED
+batter,Josh Inglis,top order,86,44,-42,role-split z vs pooled z,fallers in the full model,COMPUTED
 batter,Venkatesh Iyer,top order,135,95,-40,role-split z vs pooled z,fallers in the full model,COMPUTED
-batter,Johnson Charles,top order,152,115,-37,role-split z vs pooled z,fallers in the full model,COMPUTED
+batter,Johnson Charles,top order,153,114,-39,role-split z vs pooled z,fallers in the full model,COMPUTED
 batter,Sahibzada Farhan,top order,136,102,-34,role-split z vs pooled z,fallers in the full model,COMPUTED
 batter,Soumya Sarkar,top order,162,128,-34,role-split z vs pooled z,fallers in the full model,COMPUTED
-batter,Jonny Bairstow,top order,79,46,-33,role-split z vs pooled z,fallers in the full model,COMPUTED
 batter,David Warner,top order,89,56,-33,role-split z vs pooled z,fallers in the full model,COMPUTED
-batter,Ishan Kishan,top order,121,89,-32,role-split z vs pooled z,fallers in the full model,COMPUTED
+batter,Jonny Bairstow,top order,79,46,-33,role-split z vs pooled z,fallers in the full model,COMPUTED
+batter,Sanju Samson,top order,93,60,-33,role-split z vs pooled z,fallers in the full model,COMPUTED
 batter,Rachin Ravindra,top order,159,127,-32,role-split z vs pooled z,fallers in the full model,COMPUTED
 batter,Shubham Dubey,lower order,54,75,21,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-batter,Sediqullah Atal,top order,153,161,8,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-batter,Matthew Wade,lower order,35,42,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+batter,Sediqullah Atal,top order,151,161,10,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+batter,Rahul Chopra,middle order,184,192,8,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 batter,Mohammad Nabi,middle order,130,137,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-batter,Abishek Porel,top order,67,74,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 batter,Jaker Ali Anik,middle order,94,101,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-batter,Rahul Chopra,middle order,185,192,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 batter,Jacob Bethell,middle order,134,141,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-batter,David Warner,top order,89,95,6,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-batter,Shaheen Afridi,lower order,184,190,6,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-batter,Romario Shepherd,lower order,53,28,-25,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
-batter,Jason Holder,lower order,102,86,-16,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+batter,Shaheen Afridi,lower order,183,190,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+batter,Abishek Porel,top order,67,74,7,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+batter,Tanzim Sakib,lower order,185,191,6,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+batter,Matthew Wade,lower order,36,42,6,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+batter,Romario Shepherd,lower order,53,27,-26,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+batter,Jason Holder,lower order,102,85,-17,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 batter,Rahul Tripathi,top order,176,163,-13,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 batter,Akeal Hosein,lower order,137,125,-12,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+batter,Alishan Sharafu,top order,100,89,-11,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 batter,Rahul Tewatia,middle order,138,127,-11,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 batter,Devon Conway,top order,161,151,-10,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 batter,Marco Jansen,lower order,115,105,-10,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
-batter,Alishan Sharafu,top order,99,91,-8,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 batter,Parvez Emon,top order,150,143,-7,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 batter,Axar Patel,lower order,42,35,-7,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+batter,Michael Bracewell,middle order,180,182,2,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Sediqullah Atal,top order,151,153,2,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Rohit Sharma,top order,188,189,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Faf du Plessis,top order,190,191,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Sunil Narine,top order,105,106,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Marcus Stoinis,middle order,32,33,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Shakib Al Hasan,top order,84,85,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Manish Pandey,top order,182,183,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Mohammad Nawaz,lower order,21,22,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Corbin Bosch,lower order,99,100,1,super overs included vs excluded,risers in the full model,COMPUTED
+batter,Kusal Perera,top order,192,180,-12,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Dasun Shanaka,middle order,109,105,-4,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Aiden Markram,middle order,88,84,-4,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Jitesh Sharma,middle order,61,57,-4,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Riyan Parag,middle order,28,25,-3,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Johnson Charles,top order,153,152,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Matthew Wade,lower order,36,35,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Sanju Samson,top order,93,92,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Andrew Balbirnie,top order,152,151,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+batter,Nicholas Pooran,top order,22,21,-1,super overs included vs excluded,fallers in the full model,COMPUTED
 bowler,Yash Punja,Spin,19,183,164,full composite vs baseline only,risers in the full model,COMPUTED
 bowler,Ravichandran Ashwin,Spin,67,203,136,full composite vs baseline only,risers in the full model,COMPUTED
 bowler,Nandre Burger,Pace,51,177,126,full composite vs baseline only,risers in the full model,COMPUTED
-bowler,Brijesh Sharma,Pace,47,172,125,full composite vs baseline only,risers in the full model,COMPUTED
-bowler,Sam Curran,Pace,76,190,114,full composite vs baseline only,risers in the full model,COMPUTED
+bowler,Brijesh Sharma,Pace,48,171,123,full composite vs baseline only,risers in the full model,COMPUTED
+bowler,Kumar Kartikeya Singh,Spin,78,191,113,full composite vs baseline only,risers in the full model,COMPUTED
+bowler,Sam Curran,Pace,77,190,113,full composite vs baseline only,risers in the full model,COMPUTED
 bowler,Deepak Chahar,Pace,23,135,112,full composite vs baseline only,risers in the full model,COMPUTED
-bowler,Kumar Kartikeya Singh,Spin,79,191,112,full composite vs baseline only,risers in the full model,COMPUTED
-bowler,Digvesh Rathi,Spin,117,219,102,full composite vs baseline only,risers in the full model,COMPUTED
-bowler,Shardul Thakur,Pace,96,195,99,full composite vs baseline only,risers in the full model,COMPUTED
-bowler,Sandeep Sharma,Pace,83,178,95,full composite vs baseline only,risers in the full model,COMPUTED
-bowler,Umesh Yadav,Pace,207,77,-130,full composite vs baseline only,fallers in the full model,COMPUTED
+bowler,Shardul Thakur,Pace,97,195,98,full composite vs baseline only,risers in the full model,COMPUTED
+bowler,Digvesh Rathi,Spin,122,219,97,full composite vs baseline only,risers in the full model,COMPUTED
+bowler,Sandeep Sharma,Pace,86,180,94,full composite vs baseline only,risers in the full model,COMPUTED
+bowler,Umesh Yadav,Pace,207,76,-131,full composite vs baseline only,fallers in the full model,COMPUTED
 bowler,Brad Evans,Pace,168,43,-125,full composite vs baseline only,fallers in the full model,COMPUTED
-bowler,Dunith Wellalage,Spin,201,78,-123,full composite vs baseline only,fallers in the full model,COMPUTED
-bowler,Fareed Malik,Pace,188,82,-106,full composite vs baseline only,fallers in the full model,COMPUTED
-bowler,Umran Malik,Pace,214,112,-102,full composite vs baseline only,fallers in the full model,COMPUTED
-bowler,Kuldeep Yadav,Spin,156,55,-101,full composite vs baseline only,fallers in the full model,COMPUTED
+bowler,Dunith Wellalage,Spin,201,79,-122,full composite vs baseline only,fallers in the full model,COMPUTED
+bowler,Fareed Malik,Pace,189,82,-107,full composite vs baseline only,fallers in the full model,COMPUTED
+bowler,Umran Malik,Pace,214,113,-101,full composite vs baseline only,fallers in the full model,COMPUTED
+bowler,Kuldeep Yadav,Spin,156,56,-100,full composite vs baseline only,fallers in the full model,COMPUTED
 bowler,Moeen Ali,Spin,181,85,-96,full composite vs baseline only,fallers in the full model,COMPUTED
 bowler,Faheem Ashraf,Pace,128,37,-91,full composite vs baseline only,fallers in the full model,COMPUTED
 bowler,Taskin Ahmed,Pace,102,12,-90,full composite vs baseline only,fallers in the full model,COMPUTED
-bowler,Tim Southee,Pace,106,21,-85,full composite vs baseline only,fallers in the full model,COMPUTED
-bowler,Kumar Kartikeya Singh,Spin,79,106,27,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
-bowler,Ravichandran Ashwin,Spin,67,92,25,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+bowler,Washington Sundar,Spin,183,97,-86,full composite vs baseline only,fallers in the full model,COMPUTED
+bowler,Kumar Kartikeya Singh,Spin,78,106,28,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 bowler,Zeeshan Ansari,Spin,138,163,25,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
-bowler,Manimaran Siddharth,Spin,121,139,18,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+bowler,Ravichandran Ashwin,Spin,67,91,24,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
+bowler,Manimaran Siddharth,Spin,120,139,19,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 bowler,Barry McCarthy,Pace,135,153,18,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 bowler,Mark Adair,Pace,92,109,17,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 bowler,Trent Boult,Pace,90,107,17,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 bowler,Wellington Masakadza,Spin,131,147,16,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 bowler,Abdullah Ahmadzai,Pace,52,68,16,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
 bowler,Jason Holder,Pace,98,113,15,current 7-term vs legacy 8-term,risers in the full model,COMPUTED
-bowler,Mohit Sharma,Pace,93,64,-29,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-bowler,Muhammad Jawadullah,Pace,107,81,-26,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+bowler,Mohit Sharma,Pace,93,65,-28,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+bowler,Chamika Karunaratne,Pace,124,98,-26,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 bowler,Anshul Kamboj,Pace,151,125,-26,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-bowler,Chamika Karunaratne,Pace,124,99,-25,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-bowler,Roston Chase,Spin,122,100,-22,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+bowler,Muhammad Jawadullah,Pace,107,81,-26,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+bowler,Roston Chase,Spin,121,99,-22,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 bowler,Anukul Roy,Spin,173,152,-21,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 bowler,Nitish Reddy,Pace,153,133,-20,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 bowler,Harsh Dubey,Spin,144,124,-20,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-bowler,Sai Kishore,Spin,61,43,-18,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
+bowler,Sai Kishore,Spin,61,44,-17,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
 bowler,Sheldon Cottrell,Pace,212,195,-17,current 7-term vs legacy 8-term,fallers in the full model,COMPUTED
-bowler,Kumar Kartikeya Singh,Spin,79,149,70,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-bowler,Aaron Hardie,Pace,91,158,67,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-bowler,Deepak Chahar,Pace,23,87,64,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+bowler,Kumar Kartikeya Singh,Spin,78,148,70,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+bowler,Aaron Hardie,Pace,91,157,66,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+bowler,Deepak Chahar,Pace,23,86,63,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 bowler,Harpreet Brar,Spin,64,118,54,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-bowler,Ben Dwarshuis,Pace,69,116,47,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 bowler,Ishant Sharma,Pace,148,195,47,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+bowler,Ben Dwarshuis,Pace,69,115,46,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 bowler,Nandre Burger,Pace,51,97,46,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 bowler,Mohsin Khan,Pace,74,120,46,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
-bowler,Josh Hazlewood,Pace,29,72,43,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 bowler,Jofra Archer,Pace,94,136,42,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
+bowler,Mohammed Shami,Pace,150,192,42,official vs ball-19 bug removed (diagnostic),risers in the full model,COMPUTED
 bowler,Kuldeep Yadav,Spin,156,103,-53,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
-bowler,Manimaran Siddharth,Spin,121,73,-48,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 bowler,Patrick Cummins,Pace,126,79,-47,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+bowler,Manimaran Siddharth,Spin,120,73,-47,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 bowler,Dushmantha Chameera,Pace,130,84,-46,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
-bowler,Roston Chase,Spin,122,77,-45,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 bowler,Ravi Bishnoi,Spin,129,85,-44,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+bowler,Roston Chase,Spin,121,77,-44,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 bowler,Naveen ul Haq,Pace,50,9,-41,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
-bowler,Khaleel Ahmed,Pace,62,27,-35,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+bowler,Khaleel Ahmed,Pace,62,24,-38,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 bowler,Akeal Hosein,Spin,142,107,-35,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
 bowler,Jason Behrendorff,Pace,66,32,-34,official vs ball-19 bug removed (diagnostic),fallers in the full model,COMPUTED
+bowler,Noor Ahmad,Spin,33,49,16,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Washington Sundar,Spin,183,189,6,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Jamie Overton,Pace,80,84,4,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Azmatullah Omarzai,Pace,96,99,3,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Allah Ghazanfar,Spin,75,77,2,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Harry Tector,Spin,20,21,1,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Kagiso Rabada,Pace,118,119,1,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Luke Wood,Pace,210,211,1,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Rashid Khan,Spin,117,118,1,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Kumar Kartikeya Singh,Spin,78,79,1,super overs included vs excluded,risers in the full model,COMPUTED
+bowler,Digvesh Rathi,Spin,122,117,-5,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Sandeep Sharma,Pace,86,83,-3,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Sufiyan Muqeem,Spin,39,37,-2,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Yuzvendra Chahal,Spin,99,97,-2,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Glenn Maxwell,Spin,187,186,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Adam Milne,Pace,44,43,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Adil Rashid,Spin,34,33,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Piyush Chawla,Spin,40,39,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Jasprit Bumrah,Pace,8,7,-1,super overs included vs excluded,fallers in the full model,COMPUTED
+bowler,Shardul Thakur,Pace,97,96,-1,super overs included vs excluded,fallers in the full model,COMPUTED

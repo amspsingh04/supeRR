@@ -1,7 +1,7 @@
 const STEPS = [
   {
     title: "What is rated",
-    body: `<p>The source files are not edited. Cleaning writes a silver copy. Ratings read that copy and score legal balls only. A legal ball is not a wide, a no-ball, an other-type extra, or a super over. An other-type extra is re-bowled like a no-ball; counting it as legal would push 150 innings past 120 legal balls. Innings 3 and later are super overs and are dropped. About 192,412 legal balls remain from 200,999 deliveries.</p>
+    body: `<p>The source files are not edited. Cleaning writes a silver copy. Ratings read that copy and score legal balls only. A legal ball is not a wide, a no-ball, or an other-type extra. An other-type extra is re-bowled like a no-ball; counting it as legal would push 150 innings past 120 legal balls. Innings 3 and 4 are super overs and are kept: every super-over ball is a death ball, and the second super over chases the first one's total plus one. About 192,445 legal balls remain from 200,999 deliveries, 33 of them in super overs.</p>
     <p>A bowler wicket is caught, bowled, LBW, stumped, or hit wicket. A run-out dismisses the batter and does not credit the bowler. Every extra now carries its run amount, so team totals include wides, no-balls, byes, and leg-byes. A bowler is charged the bat runs, every run off a wide, and the one run of a no-ball. <span class="formula">charged runs = 0</span> on a bye, leg-bye, or penalty, and byes run off a no-ball are not charged either.</p>`,
   },
   {
@@ -15,7 +15,7 @@ const STEPS = [
     title: "Pressure, which only chooses the band",
     body: `<p>Pressure is not an eighth weight in the ranking. It decides whether a ball is zero, medium, or high.</p>
     <p class="formula">pressure = occasion × competition × ball difficulty + shock + run of play</p>
-    <p>Occasion is 3 for a final, 2 for a semi-final, 1.5 for a qualifier or eliminator, 1.3 for Super 4, 1 for a league match, 0.8 for other bilateral matches, and 0.4 once a bilateral series is already won. Competition is 0.7 for Other T20 and for events whose name contains Emerging or Rising, otherwise 1.</p>
+    <p>Occasion is 3 for a final, 2 for a semi-final, 1.5 for a qualifier or eliminator, 1.3 for Super 4, 1 for a league match, 0.8 for other bilateral matches, and 0.4 once a bilateral series is already won. A super over counts as a knockout: it is never below 1.5, and a semi-final or final super over keeps 2 or 3. Competition is 0.7 for Other T20 and for events whose name contains Emerging or Rising, otherwise 1.</p>
     <p>Ball difficulty is capped from 0 to 1. For a batter the phase term is 0.25, 0.10, and 0.40 for powerplay, middle, and death. Wickets already down add 0, 0.15, or 0.30. A required rate of at least 8 adds 0.15, and at least 12 adds 0.30. For a bowler the phase term is 0.32, 0.24, and 0.32 at the death against a batter listed 1 to 7, otherwise 0.14 at the death. Wickets down subtract 0, 0.10, or 0.25. The current ball is never included in the shock or the run of play.</p>`,
   },
   {
@@ -689,8 +689,8 @@ function drawnPlayer(row, skill, detail, options, innings) {
     </table></div>
     <h3>One innings</h3>
     <p class="note">Pick a match he played. The table is every ball of that innings. His own balls are marked.</p>
-    <div class="ball-strip">${(options || []).map((item) => `<button type="button" data-match="${item.match_id}" data-innings="${item.innings}" class="${item.match_id === state.pageMatch && item.innings === state.pageInnings ? "active" : ""}">${item.match_date}<br>${item.comp_name}<br>${skill === "batters" ? `${round1(item.runs)} runs` : `${round1(item.wickets)} wickets`}</button>`).join("")}</div>
-    ${innings ? `<div class="innings-head"><p><strong>${innings.home} vs ${innings.away}</strong></p><p>${innings.competition}. ${innings.date}. ${innings.stage}.</p><p>${innings.result}</p><p>Innings ${innings.innings}: ${round1(innings.runs)} for ${innings.wickets} from ${innings.balls} balls. ${ownLine}</p></div>
+    <div class="ball-strip">${(options || []).map((item) => `<button type="button" data-match="${item.match_id}" data-innings="${item.innings}" class="${item.match_id === state.pageMatch && item.innings === state.pageInnings ? "active" : ""}">${item.match_date}${item.innings > 2 ? " · super over" : ""}<br>${item.comp_name}<br>${skill === "batters" ? `${round1(item.runs)} runs` : `${round1(item.wickets)} wickets`}</button>`).join("")}</div>
+    ${innings ? `<div class="innings-head"><p><strong>${innings.home} vs ${innings.away}</strong></p><p>${innings.competition}. ${innings.date}. ${innings.stage}.</p><p>${innings.result}</p><p>${innings.innings > 2 ? `Super over (innings ${innings.innings})` : `Innings ${innings.innings}`}: ${round1(innings.runs)} for ${innings.wickets} from ${innings.balls} balls. ${ownLine}</p></div>
     <div class="table-wrap innings-table"><table>
       <thead><tr><th>Ball</th><th class="name">Phase</th><th class="name">Batter</th><th class="name">Bowler</th><th>Runs</th><th class="name">Wicket</th></tr></thead>
       <tbody>${ballRows.map((item) => {
