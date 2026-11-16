@@ -5,12 +5,20 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+import os
+import sys
+
 from common import ROOT, Registry, describe, load, metric_row
+
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+import player_ratings as pr  # noqa: E402
 
 reg = Registry("a")
 P = load()
 balls, work, legal, matches = P["balls"], P["work"], P["legal"], P["matches"]
 pre = P["legal_pre_pressure"]
+PF = P["prefix_legal"]
 
 # ---------------------------------------------------------------- 01 dataset
 raw_balls = pd.read_csv(ROOT / "ball_by_ball.csv", usecols=["match_id", "innings", "innings_ball_num"])
@@ -244,35 +252,41 @@ count_bat = np.minimum(1.0, 0.33 * w6 + 0.05 * d6).fillna(0.0)
 count_bowl = np.minimum(1.0, 0.33 * s6 + 0.12 * f6).fillna(0.0)
 w18 = prev_sum(real_w, 18)
 r6, r18 = prev_sum(L["bat_runs"].astype(float), 6), prev_sum(L["bat_runs"].astype(float), 18)
-gap_w_clean = (w6 / 6 - w18 / 18).where(w18.notna())
-gap_r_clean = (r6 / 6 - r18 / 18).where(r18.notna())
-# Faithful replica of _shock_and_delta: at position 18 (legal ball 19) `cum[end - 18]` is cum[-1],
-# the innings total, so the 18-ball window subtracts the whole innings instead of zero.
-at19 = L["n"].eq(19)
-tot_w = real_w.groupby([L["match_id"], L["innings"]], sort=False).transform("sum")
-tot_r = L["bat_runs"].astype(float).groupby([L["match_id"], L["innings"]], sort=False).transform("sum")
-gap_w, gap_r = gap_w_clean.copy(), gap_r_clean.copy()
-gap_w[at19] = w6[at19] / 6 - (w18[at19] - tot_w[at19]) / 18
-gap_r[at19] = r6[at19] / 6 - (r18[at19] - tot_r[at19]) / 18
+gap_w = (w6 / 6 - w18 / 18).where(w18.notna())
+gap_r = (r6 / 6 - r18 / 18).where(r18.notna())
 wicket_scale = float(gap_w.std(ddof=0))
 run_scale = float(gap_r.std(ddof=0))
 delta_bat = (gap_w / wicket_scale).clip(-0.5, 1.0).fillna(0.0)
 delta_bowl = (gap_r / run_scale).clip(-0.5, 1.0).fillna(0.0)
-wicket_scale_clean = float(gap_w_clean.std(ddof=0))
-run_scale_clean = float(gap_r_clean.std(ddof=0))
-L["delta_bat_bugfree_diagnostic"] = (gap_w_clean / wicket_scale_clean).clip(-0.5, 1.0).fillna(0.0)
-L["delta_bowl_bugfree_diagnostic"] = (gap_r_clean / run_scale_clean).clip(-0.5, 1.0).fillna(0.0)
+# The pre-fix _shock_and_delta read cum[end - 18] = cum[-1], the innings total, on legal ball 19.
+# Rebuilt here only to document BUG-01 and checked against the pre-fix model's own columns.
+at19 = L["n"].eq(19)
+tot_w = real_w.groupby([L["match_id"], L["innings"]], sort=False).transform("sum")
+tot_r = L["bat_runs"].astype(float).groupby([L["match_id"], L["innings"]], sort=False).transform("sum")
+gap_w_bug, gap_r_bug = gap_w.copy(), gap_r.copy()
+gap_w_bug[at19] = w6[at19] / 6 - (w18[at19] - tot_w[at19]) / 18
+gap_r_bug[at19] = r6[at19] / 6 - (r18[at19] - tot_r[at19]) / 18
+wicket_scale_bug = float(gap_w_bug.std(ddof=0))
+run_scale_bug = float(gap_r_bug.std(ddof=0))
+L["delta_bat_pre_fix"] = (gap_w_bug / wicket_scale_bug).clip(-0.5, 1.0).fillna(0.0)
+L["delta_bowl_pre_fix"] = (gap_r_bug / run_scale_bug).clip(-0.5, 1.0).fillna(0.0)
+keys = pd.MultiIndex.from_frame(L[["match_id", "innings", "n"]])
+PFa = PF.set_index(["match_id", "innings", "n"]).reindex(keys)
+reg.fact("bug_rop_replica_vs_pre_fix_model_maxgap", float(max(np.abs(L["delta_bat_pre_fix"].to_numpy() - PFa["delta_bat"].to_numpy()).max(),
+                                                             np.abs(L["delta_bowl_pre_fix"].to_numpy() - PFa["delta_bowl"].to_numpy()).max())))
 reg.fact("bug_rop_balls_at_19", int(at19.sum()))
 reg.fact("bug_rop_delta_bat_mean_at_19", float(L.loc[at19, "delta_bat"].mean()))
 reg.fact("bug_rop_delta_bowl_mean_at_19", float(L.loc[at19, "delta_bowl"].mean()))
-reg.fact("bug_rop_delta_bat_mean_at_19_bugfree", float(L.loc[at19, "delta_bat_bugfree_diagnostic"].mean()))
-reg.fact("bug_rop_delta_bowl_mean_at_19_bugfree", float(L.loc[at19, "delta_bowl_bugfree_diagnostic"].mean()))
-reg.fact("bug_rop_scale_wicket_bugfree", wicket_scale_clean)
-reg.fact("bug_rop_scale_runs_bugfree", run_scale_clean)
+reg.fact("bug_rop_delta_bat_mean_at_19_pre_fix", float(L.loc[at19, "delta_bat_pre_fix"].mean()))
+reg.fact("bug_rop_delta_bowl_mean_at_19_pre_fix", float(L.loc[at19, "delta_bowl_pre_fix"].mean()))
+reg.fact("bug_rop_scale_wicket_pre_fix", wicket_scale_bug)
+reg.fact("bug_rop_scale_runs_pre_fix", run_scale_bug)
 reg.fact("bug_rop_delta_bowl_mean_all", float(L["delta_bowl"].mean()))
-reg.fact("bug_rop_delta_bowl_mean_all_bugfree", float(L["delta_bowl_bugfree_diagnostic"].mean()))
+reg.fact("bug_rop_delta_bowl_mean_all_pre_fix", float(L["delta_bowl_pre_fix"].mean()))
 reg.fact("bug_rop_delta_bat_mean_all", float(L["delta_bat"].mean()))
-reg.fact("bug_rop_delta_bat_mean_all_bugfree", float(L["delta_bat_bugfree_diagnostic"].mean()))
+reg.fact("bug_rop_delta_bat_mean_all_pre_fix", float(L["delta_bat_pre_fix"].mean()))
+reg.fact("bug_rop_ball19_bowler_high_share_pre_fix", float(PFa.loc[at19.to_numpy(), "band_bowl"].eq("high").mean()))
+reg.fact("bug_rop_ball19_batter_high_share_pre_fix", float(PFa.loc[at19.to_numpy(), "band"].eq("high").mean()))
 ex_w = prev_sum(L["bowler_wicket"].astype(float) - L["x_wicket"], 6).fillna(0.0)
 ex_r = prev_sum(L["charged_runs"].astype(float) - L["x_runs_bowl"], 6).fillna(0.0)
 ex_w_scale = float(ex_w.std(ddof=0))
@@ -292,8 +306,17 @@ checks = {
 }
 L["count_shock_bat"], L["count_shock_bowl"] = count_bat, count_bowl
 L["excess_shock_bat"], L["excess_shock_bowl"] = excess_bat, excess_bowl
-L["base_bat"] = L["occasion"] * L["competition"] * L["ball_bat"]
-L["base_bowl"] = L["occasion"] * L["competition"] * L["ball_bowl"]
+WEIGHT_P = pr.PRESSURE_WEIGHTS
+part_sd = {}
+for side, shock, delta in [("bat", shock_bat, delta_bat), ("bowl", shock_bowl, delta_bowl)]:
+    parts = {"situation": L["occasion"] * L["competition"] * L[f"ball_{side}"], "shock": shock, "run_of_play": delta}
+    total = pd.Series(0.0, index=L.index)
+    for name, part in parts.items():
+        part_sd[(name, side)] = float(part.std(ddof=0))
+        L[f"w_{name}_{side}"] = WEIGHT_P[name] * part / part_sd[(name, side)]
+        total = total + L[f"w_{name}_{side}"]
+    checks[f"pressure_{side}"] = float(np.abs(total - L[f"pressure_{side}"]).max())
+    checks[f"situation_{side}"] = float(np.abs(parts["situation"] - L[f"situation_{side}"]).max())
 L.to_pickle(P_PATH := (ROOT / "research_readout" / "_cache" / "legal_shock.pkl"))
 for k, v in checks.items():
     reg.fact("replication_maxgap_" + k, v)
@@ -301,6 +324,9 @@ reg.fact("scale_run_of_play_wicket", wicket_scale)
 reg.fact("scale_run_of_play_runs", run_scale)
 reg.fact("scale_excess_wicket", ex_w_scale)
 reg.fact("scale_excess_runs", ex_r_scale)
+reg.fact("pressure_weights", WEIGHT_P)
+for (name, side), v in part_sd.items():
+    reg.fact(f"pressure_sd_{name}_{side}", v)
 
 pace = L["pace_or_spin"].eq("Pace")
 spin = L["pace_or_spin"].eq("Spin")
@@ -316,7 +342,12 @@ existing_cut = pd.read_csv(ROOT / "exports" / "08_band_cutoffs.csv").set_index("
 
 summary = []
 for var, label in [("pressure_bat", "final batter pressure"), ("pressure_bowl", "final bowler pressure"),
-                   ("base_bat", "occasion x competition x batter ball difficulty"), ("base_bowl", "occasion x competition x bowler ball difficulty"),
+                   ("situation_bat", "situation: occasion x competition x batter ball difficulty"), ("situation_bowl", "situation: occasion x competition x bowler ball difficulty"),
+                   ("w_situation_bat", f"weighted situation term in batter pressure ({WEIGHT_P['situation']} x situation / its SD)"),
+                   ("w_shock_bat", f"weighted shock term in batter pressure ({WEIGHT_P['shock']} x shock / its SD)"),
+                   ("w_run_of_play_bat", f"weighted run-of-play term in batter pressure ({WEIGHT_P['run_of_play']} x run of play / its SD)"),
+                   ("w_situation_bowl", "weighted situation term in bowler pressure"), ("w_shock_bowl", "weighted shock term in bowler pressure"),
+                   ("w_run_of_play_bowl", "weighted run-of-play term in bowler pressure"),
                    ("occasion", "occasion multiplier"), ("competition", "competition multiplier"),
                    ("ball_bat", "batter ball difficulty (0-1)"), ("ball_bowl", "bowler ball difficulty (0-1)"),
                    ("count_shock_bat", "batter count shock (wickets, dots)"), ("count_shock_bowl", "bowler count shock (fours, sixes)"),
@@ -327,17 +358,29 @@ for var, label in [("pressure_bat", "final batter pressure"), ("pressure_bowl", 
     row["label"] = label
     summary.append(row)
 summary = pd.DataFrame(summary)
-for skill, total, parts in [("bat", "pressure_bat", ["base_bat", "shock_bat", "delta_bat"]), ("bowl", "pressure_bowl", ["base_bowl", "shock_bowl", "delta_bowl"])]:
+for side in ("bat", "bowl"):
+    total = f"pressure_{side}"
     var_total = L[total].var(ddof=0)
-    for part in parts:
-        share = float(np.cov(L[part], L[total], ddof=0)[0, 1] / var_total)
-        summary.loc[summary["variable"].eq(part), f"variance_share_of_{total}"] = share
-        reg.fact(f"pr_var_share_{part}", share)
+    for name in ("situation", "shock", "run_of_play"):
+        share = float(np.cov(L[f"w_{name}_{side}"], L[total], ddof=0)[0, 1] / var_total)
+        summary.loc[summary["variable"].eq(f"w_{name}_{side}"), f"variance_share_of_{total}"] = share
+        reg.fact(f"pr_var_share_{name}_{side}", share)
+    # The pre-fix index was the raw sum situation + shock + run of play (run of play with the ball-19 bug).
+    pf_parts = {"situation": PF["occasion"] * PF["competition"] * PF[f"ball_{side}"], "shock": PF[f"shock_{side}"], "run_of_play": PF[f"delta_{side}"]}
+    pf_var = PF[total].var(ddof=0)
+    for name, part in pf_parts.items():
+        reg.fact(f"pr_var_share_{name}_{side}_pre_fix", float(np.cov(part, PF[total], ddof=0)[0, 1] / pf_var))
 summary["status"] = "COMPUTED"
-reg.save(summary, "02_pressure/pressure_summary.csv", "legal frame after fit_elo; shock parts replicated from player_ratings formulas", "describe(); variance share = cov(part, total)/var(total)")
+reg.save(summary, "02_pressure/pressure_summary.csv", "legal frame after fit_elo; shock parts replicated from player_ratings formulas",
+         "describe(); variance share = cov(weighted term, total)/var(total), so the three shares sum to 1")
+w_s, w_k, w_r = WEIGHT_P["situation"], WEIGHT_P["shock"], WEIGHT_P["run_of_play"]
 formula = pd.DataFrame([
-    ("pressure_bat", "occasion x competition x ball_bat + shock_bat + delta_bat", "_attach_pressure then _add_expected_shock (final)"),
-    ("pressure_bowl", "occasion x competition x ball_bowl + shock_bowl + delta_bowl", "_attach_pressure then _add_expected_shock (final)"),
+    ("pressure_bat", f"{w_s} x situation_bat / {part_sd[('situation', 'bat')]:.5f} + {w_k} x shock_bat / {part_sd[('shock', 'bat')]:.5f} + {w_r} x delta_bat / {part_sd[('run_of_play', 'bat')]:.5f}",
+     "_combine_pressure, called by _attach_pressure and again by _add_expected_shock (final); each SD is the population SD over all legal balls"),
+    ("pressure_bowl", f"{w_s} x situation_bowl / {part_sd[('situation', 'bowl')]:.5f} + {w_k} x shock_bowl / {part_sd[('shock', 'bowl')]:.5f} + {w_r} x delta_bowl / {part_sd[('run_of_play', 'bowl')]:.5f}",
+     "_combine_pressure (final)"),
+    ("situation_bat / situation_bowl", "occasion x competition x ball_bat (ball_bowl)", "_combine_pressure"),
+    ("weights", f"PRESSURE_WEIGHTS = situation {w_s}, shock {w_k}, run of play {w_r}. Before the fix the three terms were added raw (pressure = situation + shock + run of play)", "PRESSURE_WEIGHTS"),
     ("occasion", "Final 3.0, Semi Final 2.0, Qualifier 1.5, Eliminator 1.5, Super 4 1.3, League 1.0, Others 0.8; dead bilateral rubber 0.4; unknown 1.0", "OCCASION, _dead_series_matches"),
     ("competition", "0.7 if comp_group is Other T20 or the name contains Emerging/Rising, else 1.0", "_competition_weight"),
     ("ball_bat", "clip(phase term [PP 0.25, middle 0.10, death 0.40] + wickets term [0-1 down 0, 2-4 0.15, 5+ 0.30] + chase rate term [rrr>=12 0.30, rrr>=8 0.15], 0, 1)", "_ball_difficulty"),
@@ -347,8 +390,8 @@ formula = pd.DataFrame([
     ("excess shock bat", f"clip(sum over previous 6 of (bowler_wicket - x_wicket) / {ex_w_scale:.5f}, -0.5, 1)", "_add_expected_shock"),
     ("excess shock bowl", f"clip(sum over previous 6 of (charged_runs - x_runs_bowl) / {ex_r_scale:.5f}, -0.5, 1)", "_add_expected_shock"),
     ("final shock", "clip(count shock + excess shock, -0.5, 1)", "_add_expected_shock"),
-    ("delta_bat", f"clip((wickets/6 over last 6 - wickets/18 over last 18) / {wicket_scale:.5f}, -0.5, 1); 0 before ball 19. BUG: on ball 19 the 18-ball sum is cum[17] - cum[-1] (innings total), so ball 19 sees the whole innings; the scale is inflated (bug-free scale {wicket_scale_clean:.5f})", "_shock_and_delta"),
-    ("delta_bowl", f"clip((bat runs/6 over last 6 - bat runs/18 over last 18) / {run_scale:.5f}, -0.5, 1); 0 before ball 19. Same ball-19 BUG (bug-free scale {run_scale_clean:.5f})", "_shock_and_delta"),
+    ("delta_bat", f"clip((wickets/6 over last 6 - wickets/18 over last 18) / {wicket_scale:.5f}, -0.5, 1); 0 before ball 19. FIXED: on ball 19 the 18-ball sum is now balls 1-18 (the pre-fix code subtracted the innings total there; its scale was {wicket_scale_bug:.5f})", "_shock_and_delta"),
+    ("delta_bowl", f"clip((bat runs/6 over last 6 - bat runs/18 over last 18) / {run_scale:.5f}, -0.5, 1); 0 before ball 19. Same fix (pre-fix scale {run_scale_bug:.5f})", "_shock_and_delta"),
     ("bands", "high >= p80, medium >= p50, else zero; batters on all legal balls; bowlers within Pace and within Spin", "_cut_band, _cut_band_within"),
 ], columns=["term", "as_executed", "code"])
 formula["status"] = "COMPUTED"
@@ -420,6 +463,13 @@ for _, r in phase_tab.iterrows():
     reg.fact(f"pr_phase_{r['arm']}_{r['phase']}_share_high", float(r["share_bowler_high"]))
     reg.fact(f"pr_phase_{r['arm']}_{r['phase']}_share_of_arm_high", float(r["share_of_arm_high_band"]))
     reg.fact(f"pr_phase_{r['arm']}_{r['phase']}_balls", int(r["legal_balls"]))
+for arm in ("Pace", "Spin"):
+    high_pre = PFa["band_bowl"].eq("high").to_numpy() & L["pace_or_spin"].eq(arm).to_numpy()
+    for phase_name in ("powerplay", "middle", "death"):
+        in_phase = L["phase"].eq(phase_name).to_numpy()
+        reg.fact(f"pr_phase_{arm}_{phase_name}_share_of_arm_high_pre_fix", float((high_pre & in_phase).sum() / high_pre.sum()))
+        arm_phase = L["pace_or_spin"].eq(arm).to_numpy() & in_phase
+        reg.fact(f"pr_phase_{arm}_{phase_name}_share_high_pre_fix", float((PFa["band_bowl"].to_numpy()[arm_phase] == "high").mean()))
 
 obs = []
 o = lambda k, v, n="": obs.append({"observation": k, "value": v, "notes": n, "status": "COMPUTED"})
@@ -444,14 +494,20 @@ o("corr_pressure_bat_striker_out", float(L["pressure_bat"].corr(L["striker_out"]
 o("corr_pressure_bowl_charged_runs", float(L["pressure_bowl"].corr(L["charged_runs"])))
 o("band_agreement_pre_elo_vs_final", same_band, "bands are recut after the expected-shock term is added; the final bands are the ones used")
 o("high_band_balls_first_6_of_innings", int((high & L["n"].le(6)).sum()), "no shock is possible on balls 1-6")
-o("share_of_ball_19_in_batter_high_band", float(L.loc[at19, "band"].eq("high").mean()), "ball 19 carries the run-of-play indexing bug (see limitations register)")
-o("share_of_ball_19_in_bowler_high_band", float(L.loc[at19, "band_bowl"].eq("high").mean()), "same bug")
+o("share_of_ball_19_in_batter_high_band", float(L.loc[at19, "band"].eq("high").mean()), "ball 19 carried the run-of-play indexing bug before the fix (BUG-01)")
+o("share_of_ball_19_in_bowler_high_band", float(L.loc[at19, "band_bowl"].eq("high").mean()), "after the BUG-01 fix")
+o("share_of_ball_19_in_bowler_high_band_pre_fix", float(PFa.loc[at19.to_numpy(), "band_bowl"].eq("high").mean()), "pre-fix model, with the bug")
 o("share_of_ball_18_in_batter_high_band", float(L.loc[L["n"].eq(18), "band"].eq("high").mean()), "neighbour ball for comparison")
 o("share_of_ball_20_in_batter_high_band", float(L.loc[L["n"].eq(20), "band"].eq("high").mean()), "neighbour ball for comparison")
 o("share_of_balls_1_to_18_in_batter_high_band", float(L.loc[L["n"].le(18), "band"].eq("high").mean()), "run of play is zero before ball 19")
 o("share_of_balls_19_plus_in_batter_high_band", float(L.loc[L["n"].ge(19), "band"].eq("high").mean()))
 o("share_of_balls_1_to_18_in_bowler_high_band", float(L.loc[L["n"].le(18), "band_bowl"].eq("high").mean()))
 o("share_balls_excess_wicket_term_at_floor_minus_0_5", float(L["excess_shock_bat"].le(-0.5).mean()), "no wicket in the last six balls pushes the batter excess term to its floor")
+for label, mask_now, mask_pre in [("final", L["stage"].eq("Final"), PF["stage"].eq("Final")), ("league", L["stage"].eq("League"), PF["stage"].eq("League")),
+                                  ("death", L["phase"].eq("death"), PF["phase"].eq("death")), ("powerplay", L["phase"].eq("powerplay"), PF["phase"].eq("powerplay")),
+                                  ("super_over", L["is_super_over"], PF["is_super_over"].astype(bool))]:
+    o(f"share_of_{label}_balls_in_batter_high_band_now", float(L.loc[mask_now, "band"].eq("high").mean()), "current model")
+    o(f"share_of_{label}_balls_in_batter_high_band_pre_fix", float(PF.loc[mask_pre, "band"].eq("high").mean()), "pre-fix model (raw-sum pressure)")
 o("pressure_bat_p80_cutoff", float(cut["batter"][1]))
 o("pressure_bowl_pace_p80_cutoff", float(cut["bowler_pace"][1]))
 o("pressure_bowl_spin_p80_cutoff", float(cut["bowler_spin"][1]))
@@ -462,16 +518,16 @@ o("super_over_legal_balls", int(so.sum()))
 o("super_over_mean_occasion", float(L.loc[so, "occasion"].mean()))
 o("super_over_mean_pressure_bat", float(L.loc[so, "pressure_bat"].mean()))
 o("super_over_mean_pressure_bowl", float(L.loc[so, "pressure_bowl"].mean()))
-o("super_over_share_in_batter_high_band", float(L.loc[so, "band"].eq("high").mean()), "shock and run of play start at zero in a new innings, so no super-over ball reaches the top fifth")
+o("super_over_share_in_batter_high_band", float(L.loc[so, "band"].eq("high").mean()), "shock and run of play start at zero in a new innings; the situation term (knockout occasion, death ball) now carries them")
 o("super_over_share_in_bowler_high_band", float(L.loc[so, "band_bowl"].eq("high").mean()))
 o("super_over_share_in_batter_medium_band", float(L.loc[so, "band"].eq("medium").mean()))
-o("super_over_max_pressure_bat_vs_p80_cutoff", float(L.loc[so, "pressure_bat"].max() - cut["batter"][1]), "negative: the highest super-over ball is still below the high cut")
+o("super_over_min_pressure_bat_vs_p80_cutoff", float(L.loc[so, "pressure_bat"].min() - cut["batter"][1]), "negative means at least one super-over ball is below the high cut")
 knock = L["stage"].isin(["Qualifier", "Eliminator", "Semi Final", "Final"]) & ~so
 o("knockout_match_mean_pressure_bat_excluding_super_overs", float(L.loc[knock, "pressure_bat"].mean()))
 o("knockout_match_share_in_batter_high_band", float(L.loc[knock, "band"].eq("high").mean()))
 o("death_overs_mean_pressure_bat_excluding_super_overs", float(L.loc[L["phase"].eq("death") & ~so, "pressure_bat"].mean()))
 so_cols = ["match_id", "comp_name", "stage", "innings", "n", "striker_name", "bowler_name", "bat_runs", "striker_out", "bowler_wicket",
-           "occasion", "competition", "ball_bat", "ball_bowl", "rrr", "shock_bat", "shock_bowl", "delta_bat", "delta_bowl",
+           "occasion", "competition", "ball_bat", "ball_bowl", "rrr", "situation_bat", "situation_bowl", "shock_bat", "shock_bowl", "delta_bat", "delta_bowl",
            "pressure_bat", "pressure_bowl", "band", "band_bowl", "x_runs", "x_wicket", "e_bat", "e_bowl"]
 so_balls = L.loc[so, so_cols].copy()
 so_balls["status"] = "COMPUTED"

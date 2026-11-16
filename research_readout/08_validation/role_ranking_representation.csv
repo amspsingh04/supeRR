@@ -1,12 +1,24 @@
 skill,ranking,top_k,top,middle,lower,names,status,pace,spin
-batter,current_with_role_split,10,3.0,4.0,3.0,Rilee Rossouw; Tim David; Mahendra Singh Dhoni; George Linde; Ashutosh Sharma; Tom Banton; Vaibhav Sooryavanshi; Donovan Ferreira; Muhammad Waseem; Bevon Jacobs,COMPUTED,,
-batter,current_with_role_split,20,6.0,7.0,7.0,Rilee Rossouw; Tim David; Mahendra Singh Dhoni; George Linde; Ashutosh Sharma; Tom Banton; Vaibhav Sooryavanshi; Donovan Ferreira; Muhammad Waseem; Bevon Jacobs; Dinesh Karthik; Andre Russell; Rajat Patidar; Cameron Green; Yashasvi Jaiswal; Rashid Khan; Mukul Choudhary; Patrick Cummins; Finn Allen; Prabhsimran Singh,COMPUTED,,
-batter,current_with_role_split,50,18.0,22.0,10.0,,COMPUTED,,
-batter,current_with_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
-batter,current_without_role_split,10,7.0,3.0,0.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Yashasvi Jaiswal; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Prabhsimran Singh,COMPUTED,,
-batter,current_without_role_split,20,14.0,6.0,0.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Yashasvi Jaiswal; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Prabhsimran Singh; Nicholas Pooran; Tom Banton; Cameron Green; Naman Dhir; Rajat Patidar; Phil Salt; Sai Sudharsan; Travis Head; Virat Kohli; Jos Buttler,COMPUTED,,
-batter,current_without_role_split,50,27.0,19.0,4.0,,COMPUTED,,
-batter,current_without_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
+batter,current_role_blend_0_5_official,10,4.0,5.0,1.0,Tim David; Phil Salt; Rinku Singh; Donovan Ferreira; Jos Buttler; Reeza Hendricks; Glenn Phillips; David Miller; George Linde; Sai Sudharsan,COMPUTED,,
+batter,current_role_blend_0_5_official,20,6.0,10.0,4.0,Tim David; Phil Salt; Rinku Singh; Donovan Ferreira; Jos Buttler; Reeza Hendricks; Glenn Phillips; David Miller; George Linde; Sai Sudharsan; Ashutosh Sharma; Dinesh Karthik; Asif Khan; Romario Shepherd; Rishabh Pant; Suryakumar Yadav; Nicholas Pooran; Naman Dhir; Andre Russell; Namboori Tilak Varma,COMPUTED,,
+batter,current_role_blend_0_5_official,50,14.0,23.0,13.0,,COMPUTED,,
+batter,current_role_blend_0_5_official,all (141),36.0,70.0,35.0,,COMPUTED,,
+batter,current_role_blend_1_role_only,10,3.0,5.0,2.0,Tim David; Phil Salt; Donovan Ferreira; Rinku Singh; Jos Buttler; George Linde; Reeza Hendricks; David Miller; Ashutosh Sharma; Glenn Phillips,COMPUTED,,
+batter,current_role_blend_1_role_only,20,4.0,12.0,4.0,Tim David; Phil Salt; Donovan Ferreira; Rinku Singh; Jos Buttler; George Linde; Reeza Hendricks; David Miller; Ashutosh Sharma; Glenn Phillips; Romario Shepherd; Asif Khan; Dinesh Karthik; Andre Russell; Sai Sudharsan; Rishabh Pant; Suryakumar Yadav; Namboori Tilak Varma; Shashank Singh; Shreyas Iyer,COMPUTED,,
+batter,current_role_blend_1_role_only,50,12.0,25.0,13.0,,COMPUTED,,
+batter,current_role_blend_1_role_only,all (141),36.0,70.0,35.0,,COMPUTED,,
+batter,current_role_blend_0_pooled,10,5.0,5.0,0.0,Tim David; Phil Salt; Donovan Ferreira; Rinku Singh; Jos Buttler; Reeza Hendricks; Naman Dhir; David Miller; Glenn Phillips; Sai Sudharsan,COMPUTED,,
+batter,current_role_blend_0_pooled,20,8.0,9.0,3.0,Tim David; Phil Salt; Donovan Ferreira; Rinku Singh; Jos Buttler; Reeza Hendricks; Naman Dhir; David Miller; Glenn Phillips; Sai Sudharsan; George Linde; Dinesh Karthik; Nicholas Pooran; Romario Shepherd; Ashutosh Sharma; Rishabh Pant; Asif Khan; Abhishek Sharma; Shashank Singh; Yashasvi Jaiswal,COMPUTED,,
+batter,current_role_blend_0_pooled,50,15.0,23.0,12.0,,COMPUTED,,
+batter,current_role_blend_0_pooled,all (141),36.0,70.0,35.0,,COMPUTED,,
+batter,pre_fix_with_role_split,10,3.0,4.0,3.0,Rilee Rossouw; Tim David; Mahendra Singh Dhoni; George Linde; Ashutosh Sharma; Tom Banton; Vaibhav Sooryavanshi; Donovan Ferreira; Muhammad Waseem; Bevon Jacobs,COMPUTED,,
+batter,pre_fix_with_role_split,20,6.0,7.0,7.0,Rilee Rossouw; Tim David; Mahendra Singh Dhoni; George Linde; Ashutosh Sharma; Tom Banton; Vaibhav Sooryavanshi; Donovan Ferreira; Muhammad Waseem; Bevon Jacobs; Dinesh Karthik; Andre Russell; Rajat Patidar; Cameron Green; Yashasvi Jaiswal; Rashid Khan; Mukul Choudhary; Patrick Cummins; Finn Allen; Prabhsimran Singh,COMPUTED,,
+batter,pre_fix_with_role_split,50,18.0,22.0,10.0,,COMPUTED,,
+batter,pre_fix_with_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
+batter,pre_fix_without_role_split,10,7.0,3.0,0.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Yashasvi Jaiswal; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Prabhsimran Singh,COMPUTED,,
+batter,pre_fix_without_role_split,20,14.0,6.0,0.0,Rilee Rossouw; Tim David; Vaibhav Sooryavanshi; Muhammad Waseem; Finn Allen; Yashasvi Jaiswal; Donovan Ferreira; Dinesh Karthik; Abhishek Sharma; Prabhsimran Singh; Nicholas Pooran; Tom Banton; Cameron Green; Naman Dhir; Rajat Patidar; Phil Salt; Sai Sudharsan; Travis Head; Virat Kohli; Jos Buttler,COMPUTED,,
+batter,pre_fix_without_role_split,50,27.0,19.0,4.0,,COMPUTED,,
+batter,pre_fix_without_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
 batter,legacy_8term_with_role_split,10,3.0,3.0,4.0,Rilee Rossouw; Mahendra Singh Dhoni; Tim David; George Linde; Ashutosh Sharma; Vaibhav Sooryavanshi; Donovan Ferreira; Dinesh Karthik; Muhammad Waseem; Rashid Khan,COMPUTED,,
 batter,legacy_8term_with_role_split,20,6.0,7.0,7.0,Rilee Rossouw; Mahendra Singh Dhoni; Tim David; George Linde; Ashutosh Sharma; Vaibhav Sooryavanshi; Donovan Ferreira; Dinesh Karthik; Muhammad Waseem; Rashid Khan; Tom Banton; Andre Russell; Patrick Cummins; Cameron Green; Bevon Jacobs; Finn Allen; Yashasvi Jaiswal; Nicholas Pooran; Rajat Patidar; Mohammad Nawaz,COMPUTED,,
 batter,legacy_8term_with_role_split,50,16.0,21.0,13.0,,COMPUTED,,
@@ -16,6 +28,6 @@ batter,legacy_8term_without_role_split,20,12.0,5.0,3.0,Rilee Rossouw; Tim David;
 batter,legacy_8term_without_role_split,50,25.0,19.0,6.0,,COMPUTED,,
 batter,legacy_8term_without_role_split,all (216),87.0,92.0,37.0,,COMPUTED,,
 bowler,current,10,,,,,COMPUTED,5.0,5.0
-bowler,current,20,,,,,COMPUTED,11.0,9.0
+bowler,current,20,,,,,COMPUTED,13.0,7.0
 bowler,current,50,,,,,COMPUTED,29.0,21.0
-bowler,current,all (226),,,,,COMPUTED,148.0,78.0
+bowler,current,all (143),,,,,COMPUTED,90.0,53.0

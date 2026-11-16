@@ -1,49 +1,64 @@
 observation,value,notes,status
-batter_high_band_share_in_death_overs,0.2722045359196466,,COMPUTED
-batter_high_band_share_in_powerplay,0.17363836035635843,,COMPUTED
-batter_high_band_share_in_chases,0.4838725599072086,,COMPUTED
-batter_high_band_share_from_occasion_above_1,0.0491843735347104,,COMPUTED
+batter_high_band_share_in_death_overs,0.4933047670058918,,COMPUTED
+batter_high_band_share_in_powerplay,0.16940852398806336,,COMPUTED
+batter_high_band_share_in_chases,0.6387889917616753,,COMPUTED
+batter_high_band_share_from_occasion_above_1,0.12097329558497207,,COMPUTED
 share_of_all_legal_balls_with_occasion_above_1,0.04408012678947232,,COMPUTED
-share_of_final_balls_in_batter_high_band,0.2606127722406792,,COMPUTED
-share_of_league_balls_in_batter_high_band,0.21316060971534023,,COMPUTED
-share_of_dead_rubber_balls_in_batter_high_band,0.16091260260743603,,COMPUTED
+share_of_final_balls_in_batter_high_band,0.8637873754152824,,COMPUTED
+share_of_league_balls_in_batter_high_band,0.2032432903703919,,COMPUTED
+share_of_dead_rubber_balls_in_batter_high_band,0.012312892322549493,,COMPUTED
 share_balls_batter_count_shock_positive,0.8562342487463951,,COMPUTED
-share_balls_batter_final_shock_negative,0.6836550702798202,,COMPUTED
-share_balls_shock_bat_at_cap_1,0.2611395463638962,,COMPUTED
-share_balls_shock_bowl_at_cap_1,0.22916677492270518,,COMPUTED
+share_balls_batter_final_shock_negative,0.6832601522512926,,COMPUTED
+share_balls_shock_bat_at_cap_1,0.2608901244511419,,COMPUTED
+share_balls_shock_bowl_at_cap_1,0.22986827405232663,,COMPUTED
 share_balls_ball_bat_clipped_at_1,0.03615578476967445,,COMPUTED
 share_balls_ball_bowl_clipped_at_0,0.07633869417236093,,COMPUTED
-corr_pressure_bat_pressure_bowl,-0.24644662068080384,,COMPUTED
-corr_pressure_bat_bat_runs,-0.06785235937330024,,COMPUTED
-corr_pressure_bat_striker_out,0.006239783427440327,,COMPUTED
-corr_pressure_bowl_charged_runs,0.05961010336396982,,COMPUTED
-band_agreement_pre_elo_vs_final,0.8853074904518174,bands are recut after the expected-shock term is added; the final bands are the ones used,COMPUTED
-high_band_balls_first_6_of_innings,0.0,no shock is possible on balls 1-6,COMPUTED
-share_of_ball_19_in_batter_high_band,0.26214160327677005,ball 19 carries the run-of-play indexing bug (see limitations register),COMPUTED
-share_of_ball_19_in_bowler_high_band,0.5494441193680515,same bug,COMPUTED
-share_of_ball_18_in_batter_high_band,0.0011702750146284377,neighbour ball for comparison,COMPUTED
-share_of_ball_20_in_batter_high_band,0.2422469280280866,neighbour ball for comparison,COMPUTED
-share_of_balls_1_to_18_in_batter_high_band,0.0003894080996884735,run of play is zero before ball 19,COMPUTED
-share_of_balls_19_plus_in_batter_high_band,0.25062952811686023,,COMPUTED
-share_of_balls_1_to_18_in_bowler_high_band,0.04228322949117341,,COMPUTED
-share_balls_excess_wicket_term_at_floor_minus_0_5,0.5071786744264595,no wicket in the last six balls pushes the batter excess term to its floor,COMPUTED
-pressure_bat_p80_cutoff,1.9192369502623816,,COMPUTED
-pressure_bowl_pace_p80_cutoff,1.4457822524985138,,COMPUTED
-pressure_bowl_spin_p80_cutoff,1.4594770839008306,,COMPUTED
+corr_pressure_bat_pressure_bowl,0.011774899217939795,,COMPUTED
+corr_pressure_bat_bat_runs,-0.022204338346447593,,COMPUTED
+corr_pressure_bat_striker_out,0.04095691097691798,,COMPUTED
+corr_pressure_bowl_charged_runs,0.04980002242560013,,COMPUTED
+band_agreement_pre_elo_vs_final,0.9221387929018681,bands are recut after the expected-shock term is added; the final bands are the ones used,COMPUTED
+high_band_balls_first_6_of_innings,228.0,no shock is possible on balls 1-6,COMPUTED
+share_of_ball_19_in_batter_high_band,0.14803978935049736,ball 19 carried the run-of-play indexing bug before the fix (BUG-01),COMPUTED
+share_of_ball_19_in_bowler_high_band,0.4499707431246343,after the BUG-01 fix,COMPUTED
+share_of_ball_19_in_bowler_high_band_pre_fix,0.5494441193680515,"pre-fix model, with the bug",COMPUTED
+share_of_ball_18_in_batter_high_band,0.07255705090696314,neighbour ball for comparison,COMPUTED
+share_of_ball_20_in_batter_high_band,0.15447630193095377,neighbour ball for comparison,COMPUTED
+share_of_balls_1_to_18_in_batter_high_band,0.04374350986500519,run of play is zero before ball 19,COMPUTED
+share_of_balls_19_plus_in_batter_high_band,0.23423395554015677,,COMPUTED
+share_of_balls_1_to_18_in_bowler_high_band,0.33025051921079956,,COMPUTED
+share_balls_excess_wicket_term_at_floor_minus_0_5,0.46735430902335734,no wicket in the last six balls pushes the batter excess term to its floor,COMPUTED
+share_of_final_balls_in_batter_high_band_now,0.8637873754152824,current model,COMPUTED
+share_of_final_balls_in_batter_high_band_pre_fix,0.2606127722406792,pre-fix model (raw-sum pressure),COMPUTED
+share_of_league_balls_in_batter_high_band_now,0.2032432903703919,current model,COMPUTED
+share_of_league_balls_in_batter_high_band_pre_fix,0.21316060971534023,pre-fix model (raw-sum pressure),COMPUTED
+share_of_death_balls_in_batter_high_band_now,0.5892155369383092,current model,COMPUTED
+share_of_death_balls_in_batter_high_band_pre_fix,0.33602437166793603,pre-fix model (raw-sum pressure),COMPUTED
+share_of_powerplay_balls_in_batter_high_band_now,0.10917339206758822,current model,COMPUTED
+share_of_powerplay_balls_in_batter_high_band_pre_fix,0.11564950114235935,pre-fix model (raw-sum pressure),COMPUTED
+share_of_super_over_balls_in_batter_high_band_now,0.9090909090909091,current model,COMPUTED
+share_of_super_over_balls_in_batter_high_band_pre_fix,0.0,pre-fix model (raw-sum pressure),COMPUTED
+pressure_bat_p80_cutoff,1.523021978367103,,COMPUTED
+pressure_bowl_pace_p80_cutoff,1.688369149250184,,COMPUTED
+pressure_bowl_spin_p80_cutoff,1.5291960429570493,,COMPUTED
 replication_max_abs_gap_count_shock_bat_vs_pre_elo,0.0,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
 replication_max_abs_gap_count_shock_bowl_vs_pre_elo,0.0,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
 replication_max_abs_gap_delta_bat,0.0,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
 replication_max_abs_gap_delta_bowl,0.0,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
-replication_max_abs_gap_final_shock_bat,2.1649348980190553e-15,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
-replication_max_abs_gap_final_shock_bowl,6.106226635438361e-15,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
+replication_max_abs_gap_final_shock_bat,3.0531133177191805e-15,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
+replication_max_abs_gap_final_shock_bowl,6.217248937900877e-15,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
+replication_max_abs_gap_pressure_bat,1.3322676295501878e-15,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
+replication_max_abs_gap_situation_bat,0.0,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
+replication_max_abs_gap_pressure_bowl,2.4424906541753444e-15,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
+replication_max_abs_gap_situation_bowl,0.0,readout recomputation of the shock and run-of-play terms vs pipeline columns,COMPUTED
 super_over_legal_balls,33.0,,COMPUTED
 super_over_mean_occasion,1.8636363636363635,,COMPUTED
-super_over_mean_pressure_bat,0.6881818181818182,,COMPUTED
-super_over_mean_pressure_bowl,0.5587272727272727,,COMPUTED
-super_over_share_in_batter_high_band,0.0,"shock and run of play start at zero in a new innings, so no super-over ball reaches the top fifth",COMPUTED
-super_over_share_in_bowler_high_band,0.0,,COMPUTED
-super_over_share_in_batter_medium_band,1.0,,COMPUTED
-super_over_max_pressure_bat_vs_p80_cutoff,-0.8692369502623818,negative: the highest super-over ball is still below the high cut,COMPUTED
-knockout_match_mean_pressure_bat_excluding_super_overs,0.834935592094413,,COMPUTED
-knockout_match_share_in_batter_high_band,0.23944262761268306,,COMPUTED
-death_overs_mean_pressure_bat_excluding_super_overs,0.9264868427926439,,COMPUTED
+super_over_mean_pressure_bat,1.7532252019596306,,COMPUTED
+super_over_mean_pressure_bowl,2.246764032112962,,COMPUTED
+super_over_share_in_batter_high_band,0.9090909090909091,"shock and run of play start at zero in a new innings; the situation term (knockout occasion, death ball) now carries them",COMPUTED
+super_over_share_in_bowler_high_band,1.0,,COMPUTED
+super_over_share_in_batter_medium_band,0.09090909090909091,,COMPUTED
+super_over_min_pressure_bat_vs_p80_cutoff,-0.09635523542505231,negative means at least one super-over ball is below the high cut,COMPUTED
+knockout_match_mean_pressure_bat_excluding_super_overs,1.9846706411220307,,COMPUTED
+knockout_match_share_in_batter_high_band,0.6044362292051756,,COMPUTED
+death_overs_mean_pressure_bat_excluding_super_overs,1.8739381009534302,,COMPUTED

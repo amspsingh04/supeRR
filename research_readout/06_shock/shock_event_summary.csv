@@ -1,21 +1,26 @@
 scope,legal_ball_n,over,batter_out_id,striker,bowler,dismissal,score_at_fall,shock_bat_on_ball,shock_bat_next_ball,count_shock_bat_next_ball,max_shock_bat_next6,pressure_bat_next_ball,high_band_balls_next6,next6_balls,status,metric,value
-"IPL 2025 final, innings 2",30.0,5.7,25669.0,Priyansh Arya,Josh Hazlewood,Caught,43/1,-0.3716275825512172,1.0,0.38,1.0,3.2,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",51.0,9.3,7216.0,Prabhsimran Singh,Krunal Pandya,Caught,72/2,-0.40554568486281983,1.0,0.38,1.0,3.2,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",58.0,10.4,3647.0,Shreyas Iyer,Romario Shepherd,Caught,79/3,-0.39183301522544944,1.0,0.43000000000000005,1.0,2.8692369502623816,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",73.0,13.1,4736.0,Josh Inglis,Krunal Pandya,Caught,98/4,-0.39427526133016944,1.0,0.43000000000000005,1.0,2.8692369502623816,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",98.0,17.2,7059.0,Nehal Wadhera,Bhuvneshwar Kumar,Caught,136/5,-0.4,1.0,0.43000000000000005,1.0,5.0,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",100.0,17.4,2639.0,Marcus Stoinis,Bhuvneshwar Kumar,Caught,142/6,1.0,1.0,0.7100000000000001,1.0,5.0,6.0,6.0,COMPUTED,,
-"IPL 2025 final, innings 2",104.0,18.2,6676.0,Azmatullah Omarzai,Yash Dayal,Caught,145/7,1.0,1.0,0.7100000000000001,1.0,5.0,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",30.0,5.7,25669.0,Priyansh Arya,Josh Hazlewood,Caught,43/1,-0.3792224944888517,1.0,0.38,1.0,3.764926860133184,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",51.0,9.3,7216.0,Prabhsimran Singh,Krunal Pandya,Caught,72/2,-0.39169069772444876,1.0,0.38,1.0,3.764926860133184,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",58.0,10.4,3647.0,Shreyas Iyer,Romario Shepherd,Caught,79/3,-0.37840610484627346,1.0,0.43000000000000005,1.0,3.6933304110784513,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",73.0,13.1,4736.0,Josh Inglis,Krunal Pandya,Caught,98/4,-0.37537661528779764,1.0,0.43000000000000005,1.0,3.6933304110784513,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",98.0,17.2,7059.0,Nehal Wadhera,Bhuvneshwar Kumar,Caught,136/5,-0.4,1.0,0.43000000000000005,1.0,8.350641391018346,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",100.0,17.4,2639.0,Marcus Stoinis,Bhuvneshwar Kumar,Caught,142/6,1.0,1.0,0.7100000000000001,1.0,8.350641391018346,6.0,6.0,COMPUTED,,
+"IPL 2025 final, innings 2",104.0,18.2,6676.0,Azmatullah Omarzai,Yash Dayal,Caught,145/7,1.0,1.0,0.7100000000000001,1.0,8.350641391018346,6.0,6.0,COMPUTED,,
 all innings,,,,,,,,,,,,,,,COMPUTED,share_of_balls_within_6_after_a_wicket,0.27531502507209854
-all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_within_6_after_wicket,0.7643206311458393
-all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_otherwise,0.00017926030029685505
-all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_within_6_after_wicket,0.9467767836207024
-all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_otherwise,-0.3658461342784045
-all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bowl_after_six_in_last_6,0.8269017944680718
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_all_balls_with_four_or_six_in_last_6,0.6358440073787316
+pre-fix model,,,,,,,,,,,,,,,COMPUTED,pre_fix_share_of_batter_high_band_balls_within_6_after_wicket,0.9993830359566644
+pre-fix model,,,,,,,,,,,,,,,COMPUTED,pre_fix_share_of_bowler_high_band_balls_with_four_or_six_in_last_6,0.9997921538061835
+pre-fix model,,,,,,,,,,,,,,,COMPUTED,pre_fix_batter_high_band_share_within_6_after_wicket,0.7643206311458393
+pre-fix model,,,,,,,,,,,,,,,COMPUTED,pre_fix_batter_high_band_share_otherwise,0.00017926030029685505
+all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_within_6_after_wicket,0.5595002170507521
+all innings,,,,,,,,,,,,,,,COMPUTED,batter_high_band_share_otherwise,0.068570650069553
+all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_within_6_after_wicket,0.9468711261190341
+all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bat_otherwise,-0.3624055885669415
+all innings,,,,,,,,,,,,,,,COMPUTED,mean_shock_bowl_after_six_in_last_6,0.8241922785249479
 all innings,,,,,,,,,,,,,,,COMPUTED,strike_rate_within_6_after_wicket,116.28635600098146
 all innings,,,,,,,,,,,,,,,COMPUTED,strike_rate_otherwise,148.19377321420887
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_batter_high_band_balls_within_6_after_wicket,0.9993830359566644
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_with_four_or_six_in_last_6,0.9997921538061835
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_zero_band_balls_with_four_or_six_in_last_6,0.35693320001290196
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_charged_runs_above_xr_last_6,0.9981293842556508
-all innings,,,,,,,,,,,,,,,COMPUTED,share_of_all_balls_charged_runs_above_xr_last_6,0.4340616799605082
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_batter_high_band_balls_within_6_after_wicket,0.7560894738184508
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_with_four_or_six_in_last_6,0.8668225513120291
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_zero_band_balls_with_four_or_six_in_last_6,0.48027506710222423
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_bowler_high_band_balls_charged_runs_above_xr_last_6,0.7594699922057677
+all innings,,,,,,,,,,,,,,,COMPUTED,share_of_all_balls_charged_runs_above_xr_last_6,0.43610901816103304

@@ -8,16 +8,17 @@ bowler_four_step,0.12,EXISTING,per four (bat_runs == 4)
 bowler_count_cap,1.0,EXISTING,"min(1, ...)"
 batter_excess_input,sum(bowler_wicket - x_wicket) over window,EXISTING,"uses bowler-credited wickets only (run outs ignored here, unlike the count part)"
 bowler_excess_input,sum(charged_runs - x_runs_bowl) over window,EXISTING,legal balls only: wides and no-balls are not in the window
-batter_excess_scale_sd,0.5110667654190784,COMPUTED,population SD of the window sums over all legal balls (zeros on balls 1-6 included)
-bowler_excess_scale_sd,4.417313700476976,COMPUTED,same
+batter_excess_scale_sd,0.5104300350589718,COMPUTED,population SD of the window sums over all legal balls (zeros on balls 1-6 included)
+bowler_excess_scale_sd,4.377802058760763,COMPUTED,same
 excess_clip,"[-0.5, 1.0]",EXISTING,
 final_shock_clip,"[-0.5, 1.0]",EXISTING,count + excess
 run_of_play_window,last 6 vs last 18 legal balls,EXISTING,zero before ball 19
 run_of_play_batter_input,wickets per ball,EXISTING,
 run_of_play_bowler_input,bat runs per ball,EXISTING,
-run_of_play_wicket_scale_sd_as_executed,0.0830132818186061,COMPUTED,inflated by the ball-19 indexing bug
-run_of_play_runs_scale_sd_as_executed,1.1072128552357874,COMPUTED,inflated by the ball-19 indexing bug
-run_of_play_wicket_scale_sd_bugfree,0.07333984750442635,COMPUTED,diagnostic only
-run_of_play_runs_scale_sd_bugfree,0.5928394847855586,COMPUTED,diagnostic only
+run_of_play_wicket_scale_sd_as_executed,0.07333984750442635,COMPUTED,after the BUG-01 fix
+run_of_play_runs_scale_sd_as_executed,0.5928394847855586,COMPUTED,after the BUG-01 fix
+run_of_play_wicket_scale_sd_pre_fix,0.0830132818186061,COMPUTED,"pre-fix code, inflated by the ball-19 indexing bug"
+run_of_play_runs_scale_sd_pre_fix,1.1072128552357874,COMPUTED,"pre-fix code, inflated by the ball-19 indexing bug"
 run_of_play_clip,"[-0.5, 1.0]",EXISTING,
+pressure_weights,"{'situation': 0.6, 'shock': 0.25, 'run_of_play': 0.15}",EXISTING,"each term is divided by its own SD over all legal balls, then weighted"
 bands_recut_after_excess,True,EXISTING,_add_expected_shock recomputes pressure and bands after the Elo walk

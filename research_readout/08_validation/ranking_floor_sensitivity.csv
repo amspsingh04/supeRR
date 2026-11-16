@@ -1,0 +1,9 @@
+skill,high_n_eff_floor,official,ranked,top10_high_n_eff_below_60,top10_min_high_n_eff,top20_overlap_with_official,top10,status
+batter,30,False,194,2,30.150000000000002,16,Tim David; Phil Salt; Rinku Singh; Donovan Ferreira; Priyansh Arya; Jos Buttler; Cooper Connolly; Reeza Hendricks; Glenn Phillips; David Miller,COMPUTED
+batter,45,False,170,1,54.2,18,Tim David; Phil Salt; Rinku Singh; Donovan Ferreira; Jos Buttler; Cooper Connolly; Reeza Hendricks; Glenn Phillips; David Miller; George Linde,COMPUTED
+batter,60,True,141,0,61.5521,20,Tim David; Phil Salt; Rinku Singh; Donovan Ferreira; Jos Buttler; Reeza Hendricks; Glenn Phillips; David Miller; George Linde; Sai Sudharsan,COMPUTED
+batter,90,False,95,0,127.002,16,Tim David; Rinku Singh; Donovan Ferreira; Jos Buttler; Glenn Phillips; David Miller; Sai Sudharsan; Ashutosh Sharma; Dinesh Karthik; Romario Shepherd,COMPUTED
+bowler,30,False,204,5,30.6,13,Mark Wood; Haider Ali; Mitchell Santner; Corbin Bosch; Imad Wasim; Shoriful Islam; Shaheen Afridi; Bhuvneshwar Kumar; Abrar Ahmed; Jasprit Bumrah,COMPUTED
+bowler,45,False,167,2,48.6738,17,Mark Wood; Mitchell Santner; Shaheen Afridi; Bhuvneshwar Kumar; Abrar Ahmed; Jasprit Bumrah; Mohammad Nawaz; Shakib Al Hasan; Mark Adair; Sunil Narine,COMPUTED
+bowler,60,True,143,0,87.00460000000001,20,Mitchell Santner; Shaheen Afridi; Bhuvneshwar Kumar; Abrar Ahmed; Jasprit Bumrah; Mohammad Nawaz; Mark Adair; Sunil Narine; Mujeeb Ur Rahman; Nathan Ellis,COMPUTED
+bowler,90,False,107,0,102.4941,17,Mitchell Santner; Shaheen Afridi; Bhuvneshwar Kumar; Abrar Ahmed; Jasprit Bumrah; Mohammad Nawaz; Mark Adair; Sunil Narine; Mujeeb Ur Rahman; Rasikh Salam,COMPUTED

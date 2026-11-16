@@ -14,7 +14,8 @@ const STEPS = [
   {
     title: "Pressure, which only chooses the band",
     body: `<p>Pressure is not an eighth weight in the ranking. It decides whether a ball is zero, medium, or high.</p>
-    <p class="formula">pressure = occasion × competition × ball difficulty + shock + run of play</p>
+    <p class="formula">pressure = 0.60 × situation / its spread + 0.25 × shock / its spread + 0.15 × run of play / its spread &nbsp; situation = occasion × competition × ball difficulty</p>
+    <p>Each part is divided by its own spread across all legal balls, so the weights say how much each part counts. The match situation leads. A recent wicket or boundary still raises pressure, but it no longer decides the band on its own.</p>
     <p>Occasion is 3 for a final, 2 for a semi-final, 1.5 for a qualifier or eliminator, 1.3 for Super 4, 1 for a league match, 0.8 for other bilateral matches, and 0.4 once a bilateral series is already won. A super over counts as a knockout: it is never below 1.5, and a semi-final or final super over keeps 2 or 3. Competition is 0.7 for Other T20 and for events whose name contains Emerging or Rising, otherwise 1.</p>
     <p>Ball difficulty is capped from 0 to 1. For a batter the phase term is 0.25, 0.10, and 0.40 for powerplay, middle, and death. Wickets already down add 0, 0.15, or 0.30. A required rate of at least 8 adds 0.15, and at least 12 adds 0.30. For a bowler the phase term is 0.32, 0.24, and 0.32 at the death against a batter listed 1 to 7, otherwise 0.14 at the death. Wickets down subtract 0, 0.10, or 0.25. The current ball is never included in the shock or the run of play.</p>`,
   },
@@ -31,7 +32,7 @@ const STEPS = [
   },
   {
     title: "What a ball was worth",
-    body: `<p>Expected runs and the expected wicket chance use only balls already bowled. The cell is phase, pace or spin, and ladder, shrunk toward the coarser cell with 30 balls. Before any ball, the starting assumption is 1.0 run and a 0.05 wicket chance. Batters are priced on bat runs. Bowlers are priced on charged runs.</p>
+    body: `<p>Expected runs and the expected wicket chance use only balls already bowled. The cell is phase, pace or spin, ladder, and wickets already down (0–1, 2–3, 4–5, 6–7, 8 or more), each level shrunk toward the coarser cell with 30 balls. The wickets level stops a tail-ender's ball being priced like a top-order ball. Before any ball, the starting assumption is 1.0 run and a 0.05 wicket chance. Batters are priced on bat runs. Bowlers are priced on charged runs.</p>
     <p class="formula">gap = 0.15(batter − bowler)/400 + 0.05(batting side − bowling side)/400 + 0.10(ground − 1500)/400</p>
     <p class="formula">x runs = cell mean × exp(gap), capped from 0 to 6</p>
     <p>The ratings used in the gap are pulled toward 1500 until the player has 30 legal balls on that ladder. The ground rating uses only balls already bowled there, shrunk with 2,400 balls. A new player and a new ground start at 1500.</p>
@@ -42,14 +43,14 @@ const STEPS = [
   {
     title: "The seven scores",
     body: `<p>A season weight is 0.9 to the power of how many years it sits before 2026. A career rate is the decay-weighted mean of the rows the player actually has. A season with no rows is left out. It is not written as zero, and it is not divided by 4.0951.</p>
-    <p>Every published component is then a z-score: value minus the reference mean, divided by the reference population spread, capped at −3 and 3. For batters that reference is other players in the same role with at least 30 decay-weighted legal balls. Top order is batting positions 1 to 3, middle is 4 to 6, and lower is 7 and below. For bowlers the reference is all bowlers with at least 30 decay-weighted legal balls.</p>
+    <p>Every published component is then a z-score: value minus the reference mean, divided by the reference population spread, capped at −3 and 3. For batters the z-score is half a comparison with other players in the same role and half a comparison with every batter, each against players with at least 30 decay-weighted legal balls. Top order is batting positions 1 to 3, middle is 4 to 6, and lower is 7 and below. The role half is there because the jobs differ: a number 7 comes in late to slog, a number 2 builds an innings, so each is partly judged against others doing the same job. The pooled half keeps a lower-order hitter from ranking high only because his role group is weak. The split is a modelling choice, not a finding. For bowlers the reference is all bowlers with at least 30 decay-weighted legal balls.</p>
     <p>Baseline is half the z-score of the phase-adjusted strike rate and half the phase-adjusted average for a batter. For a bowler it is half the economy gap and half the balls-per-wicket gap, with the sign flipped so lower is better. Strike rate and economy shrink toward the phase expectation with 120 balls. Average and balls per wicket shrink with 4 dismissals or wickets.</p>
-    <p>Each band score is the ball value inside that band, as a decay-weighted mean, shrunk toward 0 with 30 balls. Peers compare an innings of at least 6 balls with teammates and with the other side. Both z-scores are capped at 3. Clutch does that only in the high band, and a spell below the player’s own rate stays negative. Consistency prefers a narrower spread of match values, shrunk toward the typical spread with 8 matches.</p>`,
+    <p>Each band score is the ball value inside that band, as a decay-weighted mean, shrunk toward 0 with 30 balls. Peers compare an innings of at least 6 balls with teammates and with the other side. Both z-scores are capped at 3. Clutch does that only in the high band, and a spell below the player’s own rate stays negative. A bowler's high-band spell is legal balls only, so his own rate there is also his legal-ball economy. Consistency prefers a narrower spread of match values, shrunk toward the typical spread with 8 matches.</p>`,
   },
   {
     title: "The rank",
     body: `<p class="formula">composite = 0.20 baseline + 0.10 zero + 0.15 medium + 0.20 high + 0.15 clutch + 0.10 peers + 0.10 consistency</p>
-    <p>The seven weights sum to 1. A player is ranked with at least 120 decay-weighted legal balls and at least 30 of those in the high band. Rank 1 is the highest composite. A tie goes to the smaller player id.</p>
+    <p>The seven weights sum to 1. A player is ranked with at least 120 decay-weighted legal balls and at least 60 of those in the high band, so a high-band score never rests on a handful of overs. Rank 1 is the highest composite. A tie goes to the smaller player id.</p>
     <p>Open a player from the rankings to see each weight times each z-score, the rank of that component, and the innings and balls underneath it.</p>`,
   },
 ];
@@ -317,8 +318,8 @@ function metricsGuide() {
     </article></div>
     <div class="metric-basis">
       <div><h4>Ball value</h4><code>batter = (bat runs − expected runs) − 4 × (out − expected wicket chance)</code><code>bowler = (expected runs − runs charged) + 4 × (wicket − expected wicket chance)</code><p>Expected runs and wicket chance come only from balls already bowled in that phase, pace or spin, and level, adjusted for the batter, bowler, teams, and ground.</p></div>
-      <div><h4>Pressure</h4><code>pressure = occasion × competition × ball difficulty + shock + run of play</code><p>Occasion runs from a dead rubber up to a final. Ball difficulty adds the phase, wickets down, and the asking rate. Shock and run of play read the last six and eighteen balls, never the current one.</p></div>
-      <div><h4>Who is compared and who is ranked</h4><p>Batters are compared within top, middle, or lower order. Bowlers are compared with all bowlers. Seasons fade by 0.9 a year back from 2026, and Emerging and Rising Stars balls count half. To be ranked a player needs 120 weighted legal balls, 30 of them high pressure.</p></div>
+      <div><h4>Pressure</h4><code>pressure = 0.60 situation + 0.25 shock + 0.15 run of play (each over its spread)</code><p>Situation is occasion × competition × ball difficulty. Occasion runs from a dead rubber up to a final. Ball difficulty adds the phase, wickets down, and the asking rate. Shock and run of play read the last six and eighteen balls, never the current one.</p></div>
+      <div><h4>Who is compared and who is ranked</h4><p>Batters are compared half within top, middle, or lower order and half against every batter. Bowlers are compared with all bowlers. Seasons fade by 0.9 a year back from 2026, and Emerging and Rising Stars balls count half. To be ranked a player needs 120 weighted legal balls, 60 of them high pressure.</p></div>
     </div>
   </section>`;
 }
@@ -340,7 +341,7 @@ async function board() {
     <section class="board-ten">
       <div class="board-copy">
         <h2>Top 10</h2>
-        <p>These are the batters and bowlers who have held up best when the game tightens: the death, a steep chase, or a knockout. The number beside each name is the published score. Higher is better. A player needs 120 weighted legal balls, and 30 of them in those tight overs, before he can appear here.</p>
+        <p>These are the batters and bowlers who have held up best when the game tightens: the death, a steep chase, or a knockout. The number beside each name is the published score. Higher is better. A player needs 120 weighted legal balls, and 60 of them in those tight overs, before he can appear here.</p>
         <p>Rest on a name. The pink note beside the lists says, in ordinary cricket, why that person is this high.</p>
         <p>All batters and All bowlers, in the banner, open the full ranked lists. Data deep dive opens one of these ten and walks through a whole innings, ball by ball, with the match result. The block below lets you change the weights. Those short lists move. This top 10 does not.</p>
       </div>

@@ -23,20 +23,22 @@ lbat, lbowl = P["legacy_batters"], P["legacy_bowlers"]
 T, LT = P["traces"], P["legacy_traces"]
 
 # ---------------------------------------------------------------- 03 components
+BLEND_SCOPE = (f"batters: {pr.ROLE_BLEND} x z within top/middle/lower order + {1 - pr.ROLE_BLEND} x z across all batters (ROLE_BLEND); "
+               "bowlers all together")
 defs = pd.DataFrame([
     ("baseline", 0.20, 0.20, "batter: 0.5 z(shrunk SR - phase-expected SR) + 0.5 z(shrunk average - phase-expected average); bowler: 0.5 z(expected economy - shrunk economy) + 0.5 z(expected balls/wicket - shrunk balls/wicket)",
      "career totals, level-weighted (no season decay)", "SR and economy shrink to the phase(-arm) expectation with 120 balls; average and balls/wicket with 4 dismissals/wickets",
-     "batters within top/middle/lower order; bowlers all together", "score_batters / score_bowlers 'base'"),
+     BLEND_SCOPE, "score_batters / score_bowlers 'base'"),
     ("band_zero", 0.10, 0.10, "decay- and level-weighted mean ball value (e_bat or e_bowl) on balls in the zero pressure band",
-     "season decay 0.9^(2026-season) x level weight", "shrunk to 0 with 30 weighted balls", "batters within order group; bowlers all", "career_rate + shrink + zscore(_within)"),
+     "season decay 0.9^(2026-season) x level weight", "shrunk to 0 with 30 weighted balls", BLEND_SCOPE, "career_rate + shrink + zscore_blend / zscore"),
     ("band_medium", 0.15, 0.15, "same, medium band", "same", "same", "same", "same"),
     ("band_high", 0.20, 0.20, "same, high band (top 20% of pressure; bowlers cut within pace and within spin)", "same", "same", "same", "same"),
-    ("clutch", 0.15, 0.15, "per innings, high-band balls only (>=6 balls): own gap = (spell SR - career SR)/scale [bowler: (career economy - spell economy)/scale]; if gap>0 it is multiplied by max(teammate z,0)",
-     "level-weighted mean over spells (no season decay)", "shrunk to 0 with 5 spells", "batters within order group; bowlers all", "_clutch_spell, innings_comparisons"),
+    ("clutch", 0.15, 0.15, "per innings, high-band balls only (>=6 balls): own gap = (spell SR - career SR)/scale [bowler: (legal-ball career economy - legal-ball spell economy)/scale]; if gap>0 it is multiplied by max(teammate z,0)",
+     "level-weighted mean over spells (no season decay)", "shrunk to 0 with 5 spells", BLEND_SCOPE, "_clutch_spell, innings_comparisons"),
     ("peers", 0.10, 0.10, "per innings (>=6 balls): mean of z vs teammates in the same innings and z vs the other side's players (capped +-3), on SR or economy",
-     "level-weighted mean over innings (no season decay)", "shrunk to 0 with 5 innings", "batters within order group; bowlers all", "innings_comparisons"),
+     "level-weighted mean over innings (no season decay)", "shrunk to 0 with 5 innings", BLEND_SCOPE, "innings_comparisons"),
     ("consistency", 0.10, 0.05, "minus the level-weighted SD of match-mean ball value over matches with >=6 balls",
-     "level-weighted (no season decay)", "SD shrunk toward the reference-pool typical SD with 8 matches", "batters within order group; bowlers all", "consistency_parts"),
+     "level-weighted (no season decay)", "SD shrunk toward the reference-pool typical SD with 8 matches", BLEND_SCOPE, "consistency_parts"),
     ("form", 0.00, 0.05, "REMOVED in the current code. Legacy: share of the previous 8 innings above the player's FULL-CAREER SR/economy minus 0.5 (look-ahead)",
      "legacy: decay x level weighted", "legacy: shrunk to 0 with 8 innings", "legacy: batters within order group", "git 29956ed form_by_season"),
 ], columns=["component", "weight_current", "weight_legacy_git_head", "raw_input", "aggregation_weighting", "shrinkage", "zscore_scope", "code"])
@@ -321,9 +323,13 @@ def auc(p, y):
     return float((r[y == 1].sum() - n1 * (n1 + 1) / 2) / (n1 * n0))
 
 
+PF = P["prefix_legal"]
 met = []
-for scope, mask in [("all", pd.Series(True, index=legal.index))] + [(f"ladder_{l}", legal["ladder"].eq(l)) for l in ["IPL", "T20I", "T20"]] + [(f"season_{s}", legal["season"].eq(s)) for s in range(2022, 2027)]:
-    sub = legal.loc[mask]
+scopes = [("all", legal, pd.Series(True, index=legal.index))] + [(f"ladder_{l}", legal, legal["ladder"].eq(l)) for l in ["IPL", "T20I", "T20"]]
+scopes += [(f"season_{s}", legal, legal["season"].eq(s)) for s in range(2022, 2027)]
+scopes += [("all_pre_fix_model", PF, pd.Series(True, index=PF.index))]
+for scope, frame, mask in scopes:
+    sub = frame.loc[mask]
     for target, pcol, ycol in [("bat_runs", "x_runs", "bat_runs"), ("charged_runs", "x_runs_bowl", "charged_runs")]:
         p, y = sub[pcol].to_numpy(float), sub[ycol].to_numpy(float)
         slope, intercept, r, _, _ = stats.linregress(p, y)
@@ -348,18 +354,26 @@ for scope, mask in [("all", pd.Series(True, index=legal.index))] + [(f"ladder_{l
 met = pd.DataFrame(met)
 met["status"] = "COMPUTED"
 met["note"] = "constant baseline uses the in-sample mean (look-ahead); it is a reference, not a fair competitor"
-reg.save(met, "05_expectation_models/expectation_model_metrics.csv", "legal frame after fit_elo", "ball-level metrics; OLS and logistic recalibration")
-for _, r in met.loc[met["scope"].eq("all")].iterrows():
-    tag = f"{r['model']}_{r['target']}"
+met.loc[met["scope"].eq("all_pre_fix_model"), "note"] = "pre-fix model (expectation cells without the wickets-down level); same balls"
+reg.save(met, "05_expectation_models/expectation_model_metrics.csv", "legal frame after fit_elo; pre-fix model legal frame", "ball-level metrics; OLS and logistic recalibration")
+for _, r in met.loc[met["scope"].isin(["all", "all_pre_fix_model"])].iterrows():
+    tag = f"{r['model']}_{r['target']}" + ("_pre_fix" if r["scope"] == "all_pre_fix_model" else "")
     for c in ["mean_predicted", "mean_actual", "bias_actual_minus_predicted", "mae", "rmse", "mae_constant_in_sample_mean", "rmse_constant_in_sample_mean",
               "calibration_slope_ols", "calibration_intercept_ols", "r_squared", "calibration_slope_logistic", "calibration_intercept_logistic",
               "brier", "brier_constant", "auc", "log_loss", "spearman"]:
         if c in r and pd.notna(r[c]):
             reg.fact(f"xm_{tag}_{c}", float(r[c]))
 
-# residuals by wickets fallen (known issue: the cells have no wickets-fallen key)
+# residuals by wickets fallen (KI-03: the full cell now has a wickets-down level; the pre-fix model had none)
 res = []
 bucket = pd.cut(legal["wickets_before"], [-1, 1, 3, 5, 7, 10], labels=["0-1", "2-3", "4-5", "6-7", "8-9"])
+pf_bucket = pd.cut(PF["wickets_before"], [-1, 1, 3, 5, 7, 10], labels=["0-1", "2-3", "4-5", "6-7", "8-9"])
+for b, sub in PF.groupby(pf_bucket, observed=True):
+    res.append({"model": "pre_fix", "wickets_before": str(b), "phase": "all", "legal_balls": len(sub),
+                "mean_x_runs": sub["x_runs"].mean(), "mean_bat_runs": sub["bat_runs"].mean(), "runs_actual_minus_expected": sub["bat_runs"].mean() - sub["x_runs"].mean(),
+                "mean_x_wicket": sub["x_wicket"].mean(), "bowler_wicket_rate": sub["bowler_wicket"].mean(), "striker_out_rate": sub["striker_out"].mean(),
+                "bowler_wicket_minus_xw": sub["bowler_wicket"].mean() - sub["x_wicket"].mean(), "striker_out_minus_xw": sub["striker_out"].mean() - sub["x_wicket"].mean(),
+                "mean_e_bat": sub["e_bat"].mean(), "mean_e_bowl": sub["e_bowl"].mean(), "status": "COMPUTED"})
 for (b, phase), sub in legal.groupby([bucket, "phase"], observed=True):
     res.append({"wickets_before": str(b), "phase": phase, "legal_balls": len(sub),
                 "mean_x_runs": sub["x_runs"].mean(), "mean_bat_runs": sub["bat_runs"].mean(), "runs_actual_minus_expected": sub["bat_runs"].mean() - sub["x_runs"].mean(),
@@ -373,12 +387,17 @@ for b, sub in legal.groupby(bucket, observed=True):
                 "bowler_wicket_minus_xw": sub["bowler_wicket"].mean() - sub["x_wicket"].mean(), "striker_out_minus_xw": sub["striker_out"].mean() - sub["x_wicket"].mean(),
                 "mean_e_bat": sub["e_bat"].mean(), "mean_e_bowl": sub["e_bowl"].mean(), "status": "COMPUTED"})
 res = pd.DataFrame(res)
-reg.save(res, "05_expectation_models/residual_by_wickets_fallen.csv", "legal frame after fit_elo", "group by wickets_before bucket x phase")
+res["model"] = res["model"].fillna("current")
+res = pd.concat([res.loc[res["model"].eq("current")], res.loc[res["model"].eq("pre_fix")]], ignore_index=True)
+reg.save(res, "05_expectation_models/residual_by_wickets_fallen.csv", "legal frame after fit_elo; pre-fix model legal frame",
+         "group by wickets_before bucket x phase (current); bucket only (pre_fix rows)")
 for _, r in res.loc[res["phase"].eq("all")].iterrows():
-    reg.fact(f"wf_{r['wickets_before']}_runs_resid", float(r["runs_actual_minus_expected"]))
-    reg.fact(f"wf_{r['wickets_before']}_bw_resid", float(r["bowler_wicket_minus_xw"]))
-    reg.fact(f"wf_{r['wickets_before']}_e_bat", float(r["mean_e_bat"]))
-    reg.fact(f"wf_{r['wickets_before']}_balls", int(r["legal_balls"]))
+    sfx = "_pre_fix" if r["model"] == "pre_fix" else ""
+    reg.fact(f"wf_{r['wickets_before']}_runs_resid{sfx}", float(r["runs_actual_minus_expected"]))
+    reg.fact(f"wf_{r['wickets_before']}_bw_resid{sfx}", float(r["bowler_wicket_minus_xw"]))
+    reg.fact(f"wf_{r['wickets_before']}_e_bat{sfx}", float(r["mean_e_bat"]))
+    reg.fact(f"wf_{r['wickets_before']}_e_bowl{sfx}", float(r["mean_e_bowl"]))
+    reg.fact(f"wf_{r['wickets_before']}_balls{sfx}", int(r["legal_balls"]))
 
 # run-out mismatch (known issue)
 reg.fact("xw_mean", float(legal["x_wicket"].mean()))

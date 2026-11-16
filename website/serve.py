@@ -65,6 +65,21 @@ def _z(value, center, spread):
     return max(-3.0, min(3.0, raw))
 
 
+def _blend_line(math_row: dict, key: str, label: str, group: str) -> tuple[float | None, str]:
+    """A batting z-score is part role comparison and part comparison with every batter."""
+    role_z = _z(math_row[key], math_row[f"{key}_center"], math_row[f"{key}_spread"])
+    pooled_z = _z(math_row[key], math_row.get(f"{key}_pcenter"), math_row.get(f"{key}_pspread"))
+    blend = float(math_row.get("role_blend") or 1.0)
+    if pooled_z is None or role_z is None or blend >= 1.0:
+        return role_z, f"Inside {group}, {label} has mean { _num(math_row[f'{key}_center']) } and spread { _num(math_row[f'{key}_spread']) }, so its z-score is { _num(role_z) }."
+    combined = blend * role_z + (1 - blend) * pooled_z
+    return combined, (
+        f"Inside {group}, {label} has mean { _num(math_row[f'{key}_center']) } and spread { _num(math_row[f'{key}_spread']) }, a z-score of { _num(role_z) }. "
+        f"Across all batters the mean is { _num(math_row[f'{key}_pcenter']) } and the spread { _num(math_row[f'{key}_pspread']) }, a z-score of { _num(pooled_z) }. "
+        f"The published z-score is { _num(blend, 2) } of the first plus { _num(1 - blend, 2) } of the second: { _num(combined) }."
+    )
+
+
 class Site:
     def __init__(self, path: Path):
         self.connection = sqlite3.connect(f"{path.as_uri()}?mode=ro&immutable=1", uri=True, check_same_thread=False)
@@ -266,17 +281,17 @@ class Site:
         role = player["role"]
         group = role if skill == "batters" else "all bowlers"
         if key == "baseline" and skill == "batters":
-            sr_z = _z(math_row["sr_gap"], math_row["sr_gap_center"], math_row["sr_gap_spread"])
-            avg_z = _z(math_row["average_gap"], math_row["average_gap_center"], math_row["average_gap_spread"])
+            _, sr_line = _blend_line(math_row, "sr_gap", "the strike-rate gap", group)
+            _, avg_line = _blend_line(math_row, "average_gap", "the average gap", group)
             return [
                 f"Legal balls { _num(math_row['balls'], 0) }, runs { _num(math_row['runs'], 0) }, striker dismissals { _num(math_row['dismissals'], 0) }.",
                 f"Strike rate { _num(math_row['strike_rate'], 2) }. Average { _num(math_row['average'], 2) }.",
                 f"Phase-mix expectation: strike rate { _num(math_row['expected_sr'], 2) }, average { _num(math_row['expected_average'], 2) }.",
                 f"Strike rate is shrunk toward that expectation with strength 120 balls, giving { _num(math_row['shrunk_sr'], 2) }. The gap is { _num(math_row['sr_gap'], 3) }.",
                 f"Average is shrunk with strength 4 dismissals, giving { _num(math_row['shrunk_average'], 2) }. The gap is { _num(math_row['average_gap'], 3) }.",
-                f"Inside {group}, the strike-rate gap has mean { _num(math_row['sr_gap_center']) } and spread { _num(math_row['sr_gap_spread']) }, so its z-score is { _num(sr_z) }.",
-                f"The average gap has mean { _num(math_row['average_gap_center']) } and spread { _num(math_row['average_gap_spread']) }, so its z-score is { _num(avg_z) }.",
-                "Baseline is half of those two z-scores. The reference players are those in the role with at least 30 decay-weighted legal balls. Each z-score stops at 3.",
+                sr_line,
+                avg_line,
+                "Baseline is half of those two z-scores. The reference players are those with at least 30 decay-weighted legal balls. Each z-score stops at 3.",
             ]
         if key == "baseline":
             econ_z = _z(math_row["economy_gap"], math_row["economy_gap_center"], math_row["economy_gap_spread"])
@@ -292,15 +307,12 @@ class Site:
                 "Baseline is half of those two z-scores.",
             ]
         pre_key = PRE[key]
-        pre = math_row[pre_key]
-        center = math_row[f"{pre_key}_center"]
-        spread = math_row[f"{pre_key}_spread"]
-        rebuilt = _z(pre, center, spread)
-        shared = f"The value that enters the z-score is { _num(pre) }. Inside {group} the reference mean is { _num(center) } and the spread is { _num(spread) }, so the z-score is { _num(rebuilt) }."
+        _, z_line = _blend_line(math_row, pre_key, "the reference", group)
+        shared = f"The value that enters the z-score is { _num(math_row[pre_key]) }. {z_line}"
         if key == "band_high":
             balls = math_row["high_balls"]
             return [
-                f"Decay-weighted high-band balls: { _num(balls, 1) }. A player needs 30 of these, and 120 decay-weighted legal balls, to be ranked.",
+                f"Decay-weighted high-band balls: { _num(balls, 1) }. A player needs 60 of these, and 120 decay-weighted legal balls, to be ranked.",
                 "The band rate is the decay-weighted mean of the ball value on high-band balls only. A season with no high-band balls is left out. That rate is then shrunk toward 0 with strength 30.",
                 shared,
             ]

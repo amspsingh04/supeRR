@@ -2,7 +2,10 @@
 
 Nothing in the repository is written except research_readout/_cache.
 The current model is imported from player_ratings.py as it stands.
-The earlier eight-term model (with Form) is loaded read-only from git 29956ed for comparison.
+The model before the November fixes (ball-19 bug, raw-sum pressure, no wickets key, role-only z,
+floor 30, mixed clutch basis) is run in full from reference/player_ratings_pre_fix.py.
+The earlier eight-term model (with Form) is loaded read-only from git 29956ed and scored on the
+pre-fix frame, so legacy vs pre-fix isolates the Form change.
 """
 
 from __future__ import annotations
@@ -54,6 +57,21 @@ no_super_bowlers = pr.score_bowlers(no_super_legal, no_super_work)
 del no_super_work, no_super_legal
 print("no-super-over scoring", round(time.time() - start, 1), "s")
 
+PRE_FIX_PATH = ROOT / "research_readout" / "_scripts" / "reference" / "player_ratings_pre_fix.py"
+prefix = types.ModuleType("player_ratings_pre_fix")
+prefix.__file__ = str(PRE_FIX_PATH)
+exec(compile(PRE_FIX_PATH.read_text(encoding="utf-8"), str(PRE_FIX_PATH), "exec"), prefix.__dict__)
+if "PRESSURE_WEIGHTS" in prefix.__dict__ or "ROLE_BLEND" in prefix.__dict__:
+    raise AssertionError("reference/player_ratings_pre_fix.py is not the pre-fix model")
+prefix_work, prefix_legal = prefix.add_situation(balls)
+prefix_legal = prefix.fit_elo(prefix_legal)
+prefix_summary = dict(prefix_legal.attrs["elo_summary"])
+prefix_batters = prefix.score_batters(prefix_legal)
+prefix_bowlers = prefix.score_bowlers(prefix_legal, prefix_work)
+prefix_traces = copy.deepcopy(prefix.TRACES)
+pooled_prefix = prefix._pooled_batter_order(prefix_batters)
+print("pre-fix scoring", round(time.time() - start, 1), "s")
+
 LEGACY_REV = "29956ed"
 source = subprocess.check_output(["git", "show", f"{LEGACY_REV}:player_ratings.py"], cwd=ROOT).decode("utf-8")
 head_rev = subprocess.check_output(["git", "rev-parse", LEGACY_REV], cwd=ROOT).decode().strip()
@@ -61,14 +79,17 @@ legacy = types.ModuleType("legacy_player_ratings")
 exec(compile(source, f"git:{LEGACY_REV}:player_ratings.py", "exec"), legacy.__dict__)
 if "FORM_WEIGHT" not in legacy.__dict__:
     raise AssertionError(f"{LEGACY_REV} is not the eight-term model")
-legacy_batters = legacy.score_batters(legal)
-legacy_bowlers = legacy.score_bowlers(legal, work)
+legacy_batters = legacy.score_batters(prefix_legal)
+legacy_bowlers = legacy.score_bowlers(prefix_legal, prefix_work)
 legacy_traces = copy.deepcopy(legacy.TRACES)
 pooled_legacy = legacy._pooled_batter_order(legacy_batters)
 legacy_weights = {name: getattr(legacy, name) for name in dir(legacy) if name.endswith("_WEIGHT")}
 print("legacy scoring", round(time.time() - start, 1), "s", legacy_weights)
 
 pre_cols = ["match_id", "innings", "n", "shock_bat", "shock_bowl", "pressure_bat", "pressure_bowl", "band", "band_bowl"]
+prefix_cols = ["match_id", "innings", "n", "phase", "stage", "is_super_over", "pace_or_spin", "wickets_before", "occasion", "competition",
+               "ball_bat", "ball_bowl", "shock_bat", "shock_bowl", "delta_bat", "delta_bowl", "pressure_bat", "pressure_bowl", "band", "band_bowl",
+               "bat_runs", "charged_runs", "striker_out", "bowler_wicket", "x_runs", "x_runs_bowl", "x_wicket", "e_bat", "e_bowl"]
 payload = {
     "balls": balls,
     "matches": matches,
@@ -85,6 +106,12 @@ payload = {
     "pooled_current": pooled_current,
     "no_super_batters": no_super_batters,
     "no_super_bowlers": no_super_bowlers,
+    "prefix_legal": prefix_legal[prefix_cols].copy(),
+    "prefix_summary": prefix_summary,
+    "prefix_batters": prefix_batters,
+    "prefix_bowlers": prefix_bowlers,
+    "prefix_traces": prefix_traces,
+    "pooled_prefix": pooled_prefix,
     "legacy_batters": legacy_batters,
     "legacy_bowlers": legacy_bowlers,
     "legacy_traces": legacy_traces,

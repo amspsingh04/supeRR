@@ -20,20 +20,26 @@ COMP_COLORS = {"baseline": "#4472c4", "band_zero": "#a5a5a5", "band_medium": "#f
 P = load()
 legal = P["legal"]
 L = pd.read_pickle(OUT / "_cache" / "legal_shock.pkl")
+PF = P["prefix_legal"].set_index(["match_id", "innings", "n"]).reindex(pd.MultiIndex.from_frame(L[["match_id", "innings", "n"]]))
+PF.index = L.index
 CH = OUT / "10_charts"
 
 
 def save(fig, folder, name, source, method):
     path = CH / folder / name
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, getattr(fig, "foot_space", 0.0), 1, 1))
     fig.savefig(path, dpi=200, bbox_inches="tight", pad_inches=0.25)
     plt.close(fig)
     reg.note(f"10_charts/{folder}/{name}", source, method)
 
 
-def foot(ax, text, y=-0.27):
-    ax.annotate(text, xy=(0, y), xycoords="axes fraction", fontsize=7.5, color="#555555", ha="left", va="top")
+def foot(ax, text, y=None):
+    # A footer on an axes is counted by tight_layout and squeezes that panel, so it goes on the figure.
+    fig = ax.figure
+    lines = text.count("\n") + 1
+    fig.foot_space = (0.15 * lines + 0.1) / fig.get_figheight()
+    fig.text(0.01, 0.01, text, fontsize=7.5, color="#555555", ha="left", va="bottom")
 
 
 # slide 02 dataset
@@ -89,10 +95,11 @@ ax.text(len(order) - 0.5, p80 + 0.04, f"high cut p80 = {p80:.3f}", fontsize=8, h
 ax.text(len(order) - 0.5, p50 + 0.04, f"medium cut p50 = {p50:.3f}", fontsize=8, ha="right", va="bottom")
 ax.set_xticks(range(len(order)))
 ax.set_xticklabels(order, rotation=30, ha="right", fontsize=8)
-ax.set_ylim(min(-0.1, sop["pressure_bat"].min() - 0.1), p80 + 0.4)
+ax.set_ylim(min(-0.1, sop["pressure_bat"].min() - 0.1), max(p80, sop["pressure_bat"].max()) + 0.4)
 ax.set_ylabel("Batter pressure")
-ax.set_title("Super-over balls: knockout occasion, but no shock yet")
-foot(ax, "Each dot is a legal super-over ball. Occasion = max(stage occasion, 1.5); death phase; chase rate in innings 4. Shock and run of play reset at the start\nof the innings, so every super-over ball sits in the medium band. Source: 02_pressure/super_over_pressure.csv.", y=-0.45)
+ax.set_title("Super-over balls: knockout occasion and death-ball situation")
+high_share = sop["band"].eq("high").mean() * 100
+foot(ax, f"Each dot is a legal super-over ball. Occasion = max(stage occasion, 1.5); death phase; chase rate in innings 4. Shock and run of play reset at the start\nof the innings; the weighted situation term carries {high_share:.0f}% of these balls into the high band. Source: 02_pressure/super_over_pressure.csv.", y=-0.45)
 save(fig, "slide_03_pressure", "super_over_pressure.png", "02_pressure/super_over_pressure.csv", "strip plot")
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
@@ -118,7 +125,7 @@ for i, arm in enumerate(["Pace", "Spin"]):
         ax.text(rect.get_x() + rect.get_width() / 2, v, f"{v:.1f}%\n(n={int(n):,})", ha="center", va="bottom", fontsize=8)
 ax.set_xticks(x, ["Powerplay", "Middle", "Death"])
 ax.set_ylabel("Share of balls in the bowler high band (%)")
-ax.set_ylim(0, 32)
+ax.set_ylim(0, max(32, max(p.get_height() for p in ax.patches) * 1.3))
 ax.axhline(20, color=C["grey"], lw=0.8, ls=":")
 ax.set_title("Bowler high-pressure share by phase and arm")
 ax.legend(frameon=False)
@@ -127,23 +134,48 @@ save(fig, "slide_03_pressure", "phase_arm_high_share.png", "02_pressure/phase_bo
 
 # slide 04 what high pressure captures
 se = pd.read_csv(OUT / "06_shock/shock_event_summary.csv").dropna(subset=["metric"]).set_index("metric")["value"]
-fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-ax = axes[0]
-v = [se["batter_high_band_share_within_6_after_wicket"] * 100, se["batter_high_band_share_otherwise"] * 100]
-b = ax.bar(["Within 6 balls\nafter a wicket", "All other balls"], v, color=[C["bat"], C["grey"]])
-for rect, val in zip(b, v):
-    ax.text(rect.get_x() + rect.get_width() / 2, val, f"{val:.2f}%", ha="center", va="bottom")
-ax.set_ylabel("Share of balls in the batter high band (%)")
-ax.set_title("Batter high band = just after a wicket")
-ax = axes[1]
-v = [se["share_of_bowler_high_band_balls_with_four_or_six_in_last_6"] * 100, se["share_of_bowler_zero_band_balls_with_four_or_six_in_last_6"] * 100]
-b = ax.bar(["Bowler high band", "Bowler zero band"], v, color=[C["bowl"], C["grey"]])
-for rect, val in zip(b, v):
-    ax.text(rect.get_x() + rect.get_width() / 2, val, f"{val:.2f}%", ha="center", va="bottom")
-ax.set_ylabel("Balls with a four or six in the previous 6 (%)")
-ax.set_title("Bowler high band = just after a boundary")
-foot(axes[0], f"{se['share_of_batter_high_band_balls_within_6_after_wicket'] * 100:.2f}% of batter high-band balls fall within 6 balls of a wicket. Source: 06_shock/shock_event_summary.csv")
+fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+for ax, (pre_key, now_key, base_key, col, title, ylab) in zip(axes, [
+        ("pre_fix_share_of_batter_high_band_balls_within_6_after_wicket", "share_of_batter_high_band_balls_within_6_after_wicket",
+         "share_of_balls_within_6_after_a_wicket", C["bat"], "Batter high band: share after a wicket", "High-band balls within 6 balls after a wicket (%)"),
+        ("pre_fix_share_of_bowler_high_band_balls_with_four_or_six_in_last_6", "share_of_bowler_high_band_balls_with_four_or_six_in_last_6",
+         "share_of_all_balls_with_four_or_six_in_last_6", C["bowl"], "Bowler high band: share after a boundary", "High-band balls after a four or six in the last 6 (%)")]):
+    v = [se[pre_key] * 100, se[now_key] * 100, se[base_key] * 100]
+    b = ax.bar(["Before\n(raw sum)", "Now\n(weighted)", "All balls\n(base rate)"], v, color=[C["grey"], col, "#d9d9d9"], width=0.6)
+    for rect, val in zip(b, v):
+        ax.text(rect.get_x() + rect.get_width() / 2, val, f"{val:.1f}%", ha="center", va="bottom")
+    ax.set_ylim(0, 110)
+    ax.set_ylabel(ylab, fontsize=8.5)
+    ax.set_title(title, fontsize=11)
+foot(axes[0], "Pressure = 0.60 situation + 0.25 shock + 0.15 run of play, each over its own SD. A share at the base rate would mean the band ignores recent events.\nSource: 06_shock/shock_event_summary.csv")
 save(fig, "slide_04_high_pressure_meaning", "high_band_triggers.png", "06_shock/shock_event_summary.csv", "bar")
+
+pw = pd.read_csv(OUT / "08_validation/pressure_weight_sensitivity.csv")
+fig, ax = plt.subplots(figsize=(10, 4.2))
+def weight_label(v, r):
+    if v.startswith("pre_fix"):
+        return "before the fix\n(raw sum, bug)"
+    if v == "pressure_raw_sum_bug_fixed":
+        return "raw sum\n(bug fixed)"
+    return ("official\n" if v == "official" else "") + f"{r.w_situation:.2f}/{r.w_shock:.2f}/{r.w_run_of_play:.2f}"
+
+
+lab = [weight_label(v, r) for v, r in zip(pw["variant"], pw.itertuples())]
+x = np.arange(len(pw))
+series = [("batter_high_band_balls_within_6_after_wicket", "batter high band: after a wicket", C["bat"]),
+          ("bowler_high_band_balls_after_four_or_six_in_last_6", "bowler high band: after a boundary", C["bowl"]),
+          ("batter_high_share_of_final_balls", "final balls in the batter high band", C["accent"]),
+          ("pace_high_band_share_in_death", "pace high band: share at the death", C["grey"])]
+for k, (col, name, colr) in enumerate(series):
+    ax.bar(x + (k - 1.5) * 0.2, pw[col] * 100, 0.2, color=colr, label=name)
+ax.axhline(pw["base_rate_balls_within_6_after_wicket"].iloc[0] * 100, color=C["bat"], ls=":", lw=1)
+ax.set_xticks(x, lab, fontsize=8)
+ax.set_ylabel("%")
+ax.set_ylim(0, 125)
+ax.set_title("Pressure weights (situation / shock / run of play): what the high band tracks")
+ax.legend(frameon=False, fontsize=8, loc="upper center", ncol=2)
+foot(ax, "Dotted line: share of all balls within 6 after a wicket. Source: 08_validation/pressure_weight_sensitivity.csv", y=-0.2)
+save(fig, "slide_04_high_pressure_meaning", "pressure_weight_sensitivity.png", "08_validation/pressure_weight_sensitivity.csv", "grouped bar")
 
 bs = pd.read_csv(OUT / "02_pressure/pressure_band_summary.csv")
 fig, axes = plt.subplots(1, 2, figsize=(10, 4))
@@ -163,7 +195,8 @@ for j, arm in enumerate(["pace", "spin"]):
 axes[1].set_xticks(np.arange(3), ["zero", "medium", "high"])
 axes[1].set_title("Bowlers: economy by band (legal balls)")
 axes[1].set_ylabel("Runs per over charged on legal balls")
-axes[1].legend(frameon=False)
+axes[1].set_ylim(0, axes[1].get_ylim()[1] * 1.2)
+axes[1].legend(frameon=False, ncol=2, loc="upper left")
 foot(axes[0], "Source: 02_pressure/pressure_band_summary.csv. Bowler economy here excludes wide and no-ball runs (legal balls only).")
 save(fig, "slide_04_high_pressure_meaning", "outcomes_by_band.png", "02_pressure/pressure_band_summary.csv", "bar")
 
@@ -192,21 +225,22 @@ foot(axes[0], "Sequential predictions made inside run_elo using only earlier bal
 save(fig, "slide_05_expectation_models", "calibration_deciles.png", "05_expectation_models", "decile calibration")
 
 rw = pd.read_csv(OUT / "05_expectation_models/residual_by_wickets_fallen.csv")
-sub = rw.loc[rw["phase"].eq("all")]
+sub = rw.loc[rw["phase"].eq("all") & rw["model"].eq("current")]
+old = rw.loc[rw["phase"].eq("all") & rw["model"].eq("pre_fix")].set_index("wickets_before").reindex(sub["wickets_before"])
 fig, ax = plt.subplots(figsize=(8, 4))
 x = np.arange(len(sub))
-ax.bar(x - 0.2, sub["mean_e_bat"], 0.4, color=C["bat"], label="mean batter ball value")
-ax.bar(x + 0.2, sub["mean_e_bowl"], 0.4, color=C["bowl"], label="mean bowler ball value")
-ax.set_ylim(-0.5, 0.5)
+ax.bar(x - 0.2, old["runs_actual_minus_expected"], 0.4, color=C["grey"], label="before the fix (no wickets-down cell)")
+ax.bar(x + 0.2, sub["runs_actual_minus_expected"], 0.4, color=C["bat"], label="now (wickets-down cell)")
+ax.set_ylim(-0.45, 0.25)
 for xx, n in zip(x, sub["legal_balls"]):
-    ax.text(xx, 0.45, f"n={int(n):,}", ha="center", fontsize=8)
+    ax.text(xx, 0.2, f"n={int(n):,}", ha="center", fontsize=8)
 ax.axhline(0, color="black", lw=0.8)
 ax.set_xticks(x, sub["wickets_before"])
 ax.set_xlabel("Wickets down before the ball")
-ax.set_ylabel("Mean ball value (runs-equivalent)")
-ax.set_title("Ball value drifts with wickets fallen (not in the expectation model)")
+ax.set_ylabel("Bat runs minus xR per ball")
+ax.set_title("Runs above expectation by wickets fallen")
 ax.legend(frameon=False, loc="lower left")
-foot(ax, "The expectation cells are ladder x phase x arm only. Source: 05_expectation_models/residual_by_wickets_fallen.csv")
+foot(ax, "The full expectation cell is now ladder x phase x arm x wickets down (0-1, 2-3, 4-5, 6-7, 8+). Source: 05_expectation_models/residual_by_wickets_fallen.csv")
 save(fig, "slide_05_expectation_models", "ball_value_by_wickets_fallen.png", "05_expectation_models/residual_by_wickets_fallen.csv", "bar")
 
 # slide 06 elo
@@ -236,11 +270,12 @@ ax = axes[0]
 ax.plot(tl["legal_ball_n"], tl["pressure_bat"], color=C["bat"], label="batter pressure")
 ax.plot(tl["legal_ball_n"], tl["pressure_bowl"], color=C["bowl"], label="bowler pressure")
 ax.axhline(L["pressure_bat"].quantile(0.8), color=C["bat"], ls=":", lw=1, label="batter high cut (p80)")
+top = float(max(tl["pressure_bat"].max(), tl["pressure_bowl"].max()))
 for i, n in enumerate(tl.loc[tl["is_wicket"].eq(1), "legal_ball_n"]):
     for a in axes:
         a.axvline(n, color="black", lw=0.8, alpha=0.6)
-    ax.text(n, 5.3 + 0.35 * (i % 2), f"W{n}", ha="center", fontsize=7.5)
-ax.set_ylim(top=6.0)
+    ax.text(n, top * (1.12 + 0.07 * (i % 2)), f"W{n}", ha="center", fontsize=7.5)
+ax.set_ylim(top=top * 1.3)
 ax.set_ylabel("Pressure")
 ax.set_title("IPL 2025 final, PBKS chase of 191: pressure by legal ball")
 ax.legend(frameon=False, fontsize=8, ncol=3, loc="upper left")
@@ -251,7 +286,7 @@ ax.plot(tl["legal_ball_n"], tl["run_of_play_bowl"], color=C["accent"], lw=0.9, l
 ax.set_ylabel("Shock / run of play")
 ax.set_xlabel("Legal ball of the innings")
 ax.legend(frameon=False, fontsize=8, ncol=3, loc="lower right")
-foot(ax, "Vertical lines: wickets at legal balls 30, 51, 58, 73, 98, 100, 104. Ball 19 run of play is pinned at 1.0 by the indexing bug. Source: 06_shock/shock_innings_timeline.csv")
+foot(ax, "Vertical lines: wickets at legal balls 30, 51, 58, 73, 98, 100, 104. Run of play starts at ball 19 (ball-19 bug fixed). Source: 06_shock/shock_innings_timeline.csv")
 save(fig, "slide_07_shock", "ipl2025_final_shock_timeline.png", "06_shock/shock_innings_timeline.csv", "line")
 
 # slide 08 components and weights
@@ -358,7 +393,7 @@ order = [v for v in ab.loc[ab["skill"].eq("batter"), "variant"]]
 for k, (ax, skill) in enumerate(zip(axes, ["batter", "bowler"])):
     sub = ab.loc[ab["skill"].eq(skill)].set_index("variant").reindex(order)
     y = np.arange(len(order))
-    ax.barh(y, sub["top20_overlap"], color=[C["accent"] if v.startswith("diagnostic") else (C["bat"] if skill == "batter" else C["bowl"]) for v in order])
+    ax.barh(y, sub["top20_overlap"], color=[C["accent"] if v.startswith(("previous", "legacy", "role_blend", "pressure_weights", "pressure_raw")) else (C["bat"] if skill == "batter" else C["bowl"]) for v in order])
     for yy, (o, rho) in enumerate(zip(sub["top20_overlap"], sub["spearman_vs_full"])):
         if pd.notna(o):
             ax.text(o + 0.2, yy, f"{int(o)}/20  rho={rho:.3f}", va="center", fontsize=7.5)
@@ -367,7 +402,7 @@ for k, (ax, skill) in enumerate(zip(axes, ["batter", "bowler"])):
     ax.invert_yaxis()
     ax.set_xlabel("Top-20 overlap with the official ranking")
     ax.set_title(f"{skill.title()}s")
-foot(axes[0], "rho = Spearman vs official among ranked players. Purple = diagnostic (ball-19 bug removed), not official. Source: 08_validation/ablation_summary.csv")
+foot(axes[0], "rho = Spearman vs official among ranked players. Purple = other models (pre-fix, legacy 8-term) and the role-blend and pressure-weight alternatives. Source: 08_validation/ablation_summary.csv")
 save(fig, "slide_12_ablation", "ablation_overlap.png", "08_validation/ablation_summary.csv", "bar")
 
 # slide 13 correlations
@@ -389,8 +424,8 @@ for skill in ["batters", "bowlers"]:
 # slide 14 roles
 rr = pd.read_csv(OUT / "08_validation/role_ranking_representation.csv")
 fig, ax = plt.subplots(figsize=(9, 4.2))
-labels = ["current_with_role_split", "current_without_role_split", "legacy_8term_with_role_split", "legacy_8term_without_role_split"]
-nice = ["Current, role-split z", "Current, pooled z", "Legacy 8-term, role-split z", "Legacy 8-term, pooled z"]
+labels = ["current_role_blend_1_role_only", "current_role_blend_0_5_official", "current_role_blend_0_pooled", "pre_fix_with_role_split", "pre_fix_without_role_split"]
+nice = ["Now, role-only z", "Now, 50/50 blend (official)", "Now, pooled z", "Before the fixes, role-only z", "Before the fixes, pooled z"]
 y = np.arange(len(labels))
 left = np.zeros(len(labels))
 for role in ["top", "middle", "lower"]:
@@ -405,7 +440,8 @@ ax.set_yticks(y, nice)
 ax.invert_yaxis()
 ax.set_xlabel("Players in the batting top 20")
 ax.set_title("Batting top 20 by role")
-ax.legend(frameon=False, ncol=3, loc="lower right", fontsize=8)
+ax.set_xlim(0, 20)
+ax.legend(frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.17), fontsize=8)
 foot(ax, f"Ranked pool: top {pool.get('top order', 0)}, middle {pool.get('middle order', 0)}, lower {pool.get('lower order', 0)}. Source: 08_validation/role_ranking_representation.csv")
 save(fig, "slide_14_roles", "top20_role_composition.png", "08_validation/role_ranking_representation.csv", "stacked bar")
 
@@ -413,7 +449,7 @@ cov = pd.read_csv(OUT / "08_validation/role_coverage.csv")
 fig, ax = plt.subplots(figsize=(8, 4))
 x = np.arange(len(cov))
 ax.bar(x - 0.2, cov["n_eff_ge_30_reference"], 0.4, color=C["grey"], label="reference pool (n_eff >= 30)")
-ax.bar(x + 0.2, cov["ranked"], 0.4, color=C["bat"], label="ranked (n_eff >= 120 and high n_eff >= 30)")
+ax.bar(x + 0.2, cov["ranked"], 0.4, color=C["bat"], label="ranked (n_eff >= 120 and high n_eff >= 60)")
 for xx, a, b in zip(x, cov["n_eff_ge_30_reference"], cov["ranked"]):
     ax.text(xx - 0.2, a, str(int(a)), ha="center", va="bottom", fontsize=8)
     ax.text(xx + 0.2, b, str(int(b)), ha="center", va="bottom", fontsize=8)
@@ -425,24 +461,25 @@ foot(ax, "Source: 08_validation/role_coverage.csv")
 save(fig, "slide_14_roles", "role_coverage.png", "08_validation/role_coverage.csv", "bar")
 
 # slide 15 limitations: ball-19 bug
-by_n = L.loc[L["n"].le(40)].groupby("n").agg(bat=("band", lambda s: s.eq("high").mean()), bowl=("band_bowl", lambda s: s.eq("high").mean()),
-                                             rop_bowl=("delta_bowl", "mean"), rop_bowl_fix=("delta_bowl_bugfree_diagnostic", "mean"))
+early = L["n"].le(40)
+by_n = pd.DataFrame({"n": L.loc[early, "n"], "bowl": L.loc[early, "band_bowl"].eq("high"), "bowl_pre": PF.loc[early, "band_bowl"].eq("high"),
+                     "rop_bowl": L.loc[early, "delta_bowl"], "rop_bowl_pre": L.loc[early, "delta_bowl_pre_fix"]}).groupby("n").mean()
 fig, axes = plt.subplots(1, 2, figsize=(11, 4))
-axes[0].plot(by_n.index, by_n["bat"] * 100, "o-", ms=3, color=C["bat"], label="batter high band")
-axes[0].plot(by_n.index, by_n["bowl"] * 100, "o-", ms=3, color=C["bowl"], label="bowler high band")
+axes[0].plot(by_n.index, by_n["bowl_pre"] * 100, "o-", ms=3, color=C["grey"], label="bowler high band, before the fix")
+axes[0].plot(by_n.index, by_n["bowl"] * 100, "o-", ms=3, color=C["bowl"], label="bowler high band, now")
 axes[0].axvline(19, color="black", ls=":", lw=1)
 axes[0].set_xlabel("Legal ball of the innings")
 axes[0].set_ylabel("Share in high band (%)")
-axes[0].set_title("High-band share by ball number (balls 1-40)")
+axes[0].set_title("Bowler high-band share by ball number (balls 1-40)")
 axes[0].legend(frameon=False, fontsize=8)
-axes[1].plot(by_n.index, by_n["rop_bowl"], "o-", ms=3, color=C["bowl"], label="as executed")
-axes[1].plot(by_n.index, by_n["rop_bowl_fix"], "o-", ms=3, color=C["grey"], label="bug removed (diagnostic)")
+axes[1].plot(by_n.index, by_n["rop_bowl_pre"], "o-", ms=3, color=C["grey"], label="before the fix (ball 19 reads the innings total)")
+axes[1].plot(by_n.index, by_n["rop_bowl"], "o-", ms=3, color=C["bowl"], label="now")
 axes[1].axvline(19, color="black", ls=":", lw=1)
 axes[1].set_xlabel("Legal ball of the innings")
 axes[1].set_ylabel("Mean bowler run-of-play term")
-axes[1].set_title("Run-of-play term: ball-19 indexing bug")
+axes[1].set_title("Run-of-play term: ball-19 bug (BUG-01) fixed")
 axes[1].legend(frameon=False, fontsize=8)
-foot(axes[0], "No shock before ball 7 and no run of play before ball 19. Source: legal frame + section 02 replication.")
+foot(axes[0], "No shock before ball 7 and no run of play before ball 19. Source: legal frame, pre-fix model frame, section 02 replication.")
 save(fig, "slide_15_limitations", "ball19_bug_and_early_balls.png", "02_pressure replication", "line")
 
 reg.close()

@@ -28,8 +28,8 @@ BALL_COLUMNS = [
 ]
 
 
-def _moments(math: pd.DataFrame, role: pd.Series, columns: list[str]) -> pd.DataFrame:
-    """Mean and population spread of each pre-z value, inside the same group the z-score uses."""
+def _moments(math: pd.DataFrame, role: pd.Series, columns: list[str], pooled: bool = False) -> pd.DataFrame:
+    """Mean and population spread of each pre-z value, inside the role group. With pooled, also across every player."""
     out = math.copy()
     out["role_group"] = role.reindex(out["player_id"]).to_numpy()
     reference = out["reference"].astype(bool)
@@ -42,7 +42,21 @@ def _moments(math: pd.DataFrame, role: pd.Series, columns: list[str]) -> pd.Data
             spread.loc[index] = float(sample.std(ddof=0)) if len(sample) else np.nan
         out[f"{column}_center"] = center.to_numpy()
         out[f"{column}_spread"] = spread.to_numpy()
+        if pooled:
+            sample = out.loc[reference, column]
+            out[f"{column}_pcenter"] = float(sample.mean())
+            out[f"{column}_pspread"] = float(sample.std(ddof=0))
+    out["role_blend"] = ratings.ROLE_BLEND if pooled else 1.0
     return out
+
+
+def _blend_z(frame: pd.DataFrame, column: str) -> pd.Series:
+    """The published z-score: the role part, plus the pooled part when there is one."""
+    role_z = ((frame[column] - frame[f"{column}_center"]) / frame[f"{column}_spread"].replace(0, np.nan)).clip(-3, 3)
+    if f"{column}_pcenter" not in frame.columns:
+        return role_z
+    pooled_z = ((frame[column] - frame[f"{column}_pcenter"]) / frame[f"{column}_pspread"].replace(0, np.nan)).clip(-3, 3)
+    return frame["role_blend"] * role_z + (1 - frame["role_blend"]) * pooled_z
 
 
 def _dates(frame: pd.DataFrame) -> pd.DataFrame:
@@ -54,10 +68,9 @@ def _dates(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def _check(table: pd.DataFrame, math: pd.DataFrame, left: str, right: str, label: str) -> None:
-    merged = table.merge(math[["player_id", left, f"{left}_center", f"{left}_spread"]], on="player_id", how="left")
-    spread = merged[f"{left}_spread"].replace(0, np.nan)
-    rebuilt = ((merged[left] - merged[f"{left}_center"]) / spread).clip(-3, 3)
-    gap = (rebuilt - merged[right]).abs()
+    keep = ["player_id", "role_blend"] + [column for column in math.columns if column.startswith(f"{left}_") or column == left]
+    merged = table.merge(math[keep], on="player_id", how="left")
+    gap = (_blend_z(merged, left) - merged[right]).abs()
     print(label, "max gap", round(float(gap.max()), 6))
 
 
@@ -73,13 +86,11 @@ def main() -> None:
 
     batter_trace = ratings.TRACES["batters"]
     bowler_trace = ratings.TRACES["bowlers"]
-    batter_math = _moments(batter_trace["math"], batters.set_index("player_id")["role"], BATTER_GAPS)
+    batter_math = _moments(batter_trace["math"], batters.set_index("player_id")["role"], BATTER_GAPS, pooled=True)
     bowler_math = _moments(bowler_trace["math"], pd.Series("all", index=bowlers["player_id"]), BOWLER_GAPS)
     _check(batters, batter_math, "high_rate", "band_high", "batter high band")
     aligned = batter_math.merge(batters[["player_id", "baseline"]], on="player_id")
-    half_sr = ((aligned["sr_gap"] - aligned["sr_gap_center"]) / aligned["sr_gap_spread"].replace(0, np.nan)).clip(-3, 3)
-    half_avg = ((aligned["average_gap"] - aligned["average_gap_center"]) / aligned["average_gap_spread"].replace(0, np.nan)).clip(-3, 3)
-    base_gap = (0.5 * half_sr + 0.5 * half_avg - aligned["baseline"]).abs()
+    base_gap = (0.5 * _blend_z(aligned, "sr_gap") + 0.5 * _blend_z(aligned, "average_gap") - aligned["baseline"]).abs()
     print("batter baseline max gap", round(float(base_gap.max()), 6))
     _check(bowlers, bowler_math, "high_rate", "band_high", "bowler high band")
 

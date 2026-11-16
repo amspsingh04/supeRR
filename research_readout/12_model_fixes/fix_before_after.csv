@@ -1,0 +1,43 @@
+finding,description,metric,before_fix,after_fix,source,status
+BUG-01,ball-19 look-ahead in the run-of-play window,mean bowler run of play on legal ball 19,0.9998006612487873,0.25114207009959555,02_pressure facts,COMPUTED
+BUG-01,,mean batter run of play on legal ball 19,0.9829051490415854,0.07565457993399541,02_pressure facts,COMPUTED
+BUG-01,,run-of-play runs scale (SD),1.1072128552357874,0.5928394847855586,06_shock/shock_parameters.csv,COMPUTED
+BUG-01,,run-of-play wickets scale (SD),0.0830132818186061,0.07333984750442635,06_shock/shock_parameters.csv,COMPUTED
+BUG-01,,ball-19 share in the bowler high band,0.5494441193680515,0.4499707431246343,02_pressure/pressure_observations.csv,COMPUTED
+M-01,pressure dominated by recent events,batter high-band balls within 6 after a wicket,0.9993830359566644,0.7560894738184508,06_shock/shock_event_summary.csv,COMPUTED
+M-01,,  base rate: all balls within 6 after a wicket,0.27531502507209854,0.27531502507209854,06_shock/shock_event_summary.csv,COMPUTED
+M-01,,bowler high-band balls after a four/six in the last 6,0.9997921538061835,0.8668225513120291,06_shock/shock_event_summary.csv,COMPUTED
+M-01,,  base rate: all balls after a four/six in the last 6,0.6358440073787316,0.6358440073787316,06_shock/shock_event_summary.csv,COMPUTED
+M-01,,situation share of batter pressure variance,0.07126045375016775,0.6874353989428418,02_pressure/pressure_summary.csv,COMPUTED
+M-01,,situation share of bowler pressure variance,0.031322794701320406,0.717440395949604,02_pressure/pressure_summary.csv,COMPUTED
+M-01,,final balls in the batter high band,0.2606127722406792,0.8637873754152824,02_pressure/pressure_observations.csv,COMPUTED
+M-01,,death balls in the batter high band,0.33602437166793603,0.5892155369383092,02_pressure/pressure_observations.csv,COMPUTED
+M-01,,super-over balls in the batter high band,0.0,0.9090909090909091,02_pressure/pressure_observations.csv,COMPUTED
+M-17,side effect: bowler high band by phase,pace high-band balls in the powerplay,0.3545745361484325,0.7213904883770527,02_pressure/phase_bowling_pressure.csv,COMPUTED
+M-17,,pace high-band balls at the death,0.2837278737470676,0.10501172957986778,02_pressure/phase_bowling_pressure.csv,COMPUTED
+M-07,weak expectation discrimination,xR MAE (constant predictor 1.3282),1.3042953499364696,1.2986332254235755,05_expectation_models/expectation_model_metrics.csv,COMPUTED
+M-07,,xR R-squared,0.013317651244562195,0.01593452125904332,05_expectation_models/expectation_model_metrics.csv,COMPUTED
+M-07,,xW AUC (bowler wicket),0.5597429851347552,0.5600581626321542,05_expectation_models/expectation_model_metrics.csv,COMPUTED
+KI-03,wickets-fallen bias,"bat runs minus xR per ball, 0-1 down",0.08403538439735692,0.04849170491339172,05_expectation_models/residual_by_wickets_fallen.csv,COMPUTED
+KI-03,,"bat runs minus xR per ball, 2-3 down",0.018011590101640218,-0.0009135521146850234,05_expectation_models/residual_by_wickets_fallen.csv,COMPUTED
+KI-03,,"bat runs minus xR per ball, 4-5 down",-0.01091561484912118,0.012464869387173394,05_expectation_models/residual_by_wickets_fallen.csv,COMPUTED
+KI-03,,"bat runs minus xR per ball, 6-7 down",-0.10403268048205061,0.00704826476425735,05_expectation_models/residual_by_wickets_fallen.csv,COMPUTED
+KI-03,,"bat runs minus xR per ball, 8-9 down",-0.3453392326877678,-0.04367188429982116,05_expectation_models/residual_by_wickets_fallen.csv,COMPUTED
+KI-03,,"bowler ball value per ball, 8-9 down",0.3907911837439525,0.05739695779132315,05_expectation_models/residual_by_wickets_fallen.csv,COMPUTED
+M-06,small high-pressure samples at the top,top-10 bowlers with high n_eff < 60,4,0,07_rankings/final_bowler_rankings.csv,COMPUTED
+M-06,,top-10 batters with high n_eff < 60,4,0,07_rankings/final_batter_rankings.csv,COMPUTED
+M-06,,high-band n_eff floor,30,60,player_ratings.RANK_HIGH_BALLS,COMPUTED
+M-06,,ranked bowlers,226,143,07_rankings,COMPUTED
+M-06,,ranked batters,216,141,07_rankings,COMPUTED
+BUG-03,bowler clutch delivery basis,current high-band spells beating own rate (old basis -> legal basis),0.46988505747126436,0.43494252873563216,08_validation/diagnostic_bowler_clutch_basis.csv,COMPUTED
+BUG-03,,"mean own gap on current spells, scale units (old basis -> legal basis)",-0.16182930072445909,-0.2679978065269648,08_validation/diagnostic_bowler_clutch_basis.csv,COMPUTED
+M-18,role normalisation (top/middle/lower),"batting top 20, role-only z (before -> now)",6/7/7,4/12/4,08_validation/role_ranking_representation.csv,COMPUTED
+M-18,,"batting top 20, pooled z (before -> now)",14/6/0,8/9/3,08_validation/role_ranking_representation.csv,COMPUTED
+M-18,,"batting top 20, official (role-only before -> 50/50 blend now)",6/7/7,6/10/4,08_validation/role_ranking_representation.csv,COMPUTED
+M-18,,"batting top 10, role-only z (before -> now)",3/4/3,3/5/2,08_validation/role_ranking_representation.csv,COMPUTED
+M-18,,"batting top 10, pooled z (before -> now)",7/3/0,5/5/0,08_validation/role_ranking_representation.csv,COMPUTED
+M-18,,"batting top 10, official (role-only before -> 50/50 blend now)",3/4/3,4/5/1,08_validation/role_ranking_representation.csv,COMPUTED
+ALL,whole-model change,batters: Spearman vs pre-fix ranking,1.0,0.8449805214264308,08_validation/ablation_summary.csv,COMPUTED
+ALL,,batters: top-20 overlap with pre-fix ranking,20,9,08_validation/ablation_summary.csv,COMPUTED
+ALL,,bowlers: Spearman vs pre-fix ranking,1.0,0.7845341278439869,08_validation/ablation_summary.csv,COMPUTED
+ALL,,bowlers: top-20 overlap with pre-fix ranking,20,12,08_validation/ablation_summary.csv,COMPUTED

@@ -83,8 +83,28 @@ lookup = L.set_index(["match_id", "innings", "n"]).index
 for k in range(1, 7):
     shifted = pd.MultiIndex.from_arrays([wk_pos["match_id"], wk_pos["innings"], wk_pos["n"] + k])
     after |= lookup.isin(shifted)
+PF = P["prefix_legal"].set_index(["match_id", "innings", "n"]).reindex(lookup)
+PF.index = L.index
+four_or_six_last6 = L["count_shock_bowl"].gt(0)
+
+
+def recent_event_shares(band_bat: pd.Series, band_bowl: pd.Series) -> dict:
+    return {"bat_high_after_wicket": float(after[band_bat.eq("high")].mean()),
+            "bowl_high_after_boundary": float(four_or_six_last6[band_bowl.eq("high")].mean()),
+            "bat_high_rate_after_wicket": float(band_bat[after].eq("high").mean()),
+            "bat_high_rate_otherwise": float(band_bat[~after].eq("high").mean())}
+
+
+rec_pre = recent_event_shares(PF["band"], PF["band_bowl"])
+for k, v in rec_pre.items():
+    reg.fact(f"se_pre_fix_{k}", v)
 all_rows = pd.DataFrame([
     {"scope": "all innings", "metric": "share_of_balls_within_6_after_a_wicket", "value": float(after.mean())},
+    {"scope": "all innings", "metric": "share_of_all_balls_with_four_or_six_in_last_6", "value": float(four_or_six_last6.mean())},
+    {"scope": "pre-fix model", "metric": "pre_fix_share_of_batter_high_band_balls_within_6_after_wicket", "value": rec_pre["bat_high_after_wicket"]},
+    {"scope": "pre-fix model", "metric": "pre_fix_share_of_bowler_high_band_balls_with_four_or_six_in_last_6", "value": rec_pre["bowl_high_after_boundary"]},
+    {"scope": "pre-fix model", "metric": "pre_fix_batter_high_band_share_within_6_after_wicket", "value": rec_pre["bat_high_rate_after_wicket"]},
+    {"scope": "pre-fix model", "metric": "pre_fix_batter_high_band_share_otherwise", "value": rec_pre["bat_high_rate_otherwise"]},
     {"scope": "all innings", "metric": "batter_high_band_share_within_6_after_wicket", "value": float(L.loc[after, "band"].eq("high").mean())},
     {"scope": "all innings", "metric": "batter_high_band_share_otherwise", "value": float(L.loc[~after, "band"].eq("high").mean())},
     {"scope": "all innings", "metric": "mean_shock_bat_within_6_after_wicket", "value": float(L.loc[after, "shock_bat"].mean())},
@@ -124,11 +144,12 @@ params = pd.DataFrame([
     ("run_of_play_window", "last 6 vs last 18 legal balls", "EXISTING", "zero before ball 19"),
     ("run_of_play_batter_input", "wickets per ball", "EXISTING", ""),
     ("run_of_play_bowler_input", "bat runs per ball", "EXISTING", ""),
-    ("run_of_play_wicket_scale_sd_as_executed", fa["scale_run_of_play_wicket"], "COMPUTED", "inflated by the ball-19 indexing bug"),
-    ("run_of_play_runs_scale_sd_as_executed", fa["scale_run_of_play_runs"], "COMPUTED", "inflated by the ball-19 indexing bug"),
-    ("run_of_play_wicket_scale_sd_bugfree", fa["bug_rop_scale_wicket_bugfree"], "COMPUTED", "diagnostic only"),
-    ("run_of_play_runs_scale_sd_bugfree", fa["bug_rop_scale_runs_bugfree"], "COMPUTED", "diagnostic only"),
+    ("run_of_play_wicket_scale_sd_as_executed", fa["scale_run_of_play_wicket"], "COMPUTED", "after the BUG-01 fix"),
+    ("run_of_play_runs_scale_sd_as_executed", fa["scale_run_of_play_runs"], "COMPUTED", "after the BUG-01 fix"),
+    ("run_of_play_wicket_scale_sd_pre_fix", fa["bug_rop_scale_wicket_pre_fix"], "COMPUTED", "pre-fix code, inflated by the ball-19 indexing bug"),
+    ("run_of_play_runs_scale_sd_pre_fix", fa["bug_rop_scale_runs_pre_fix"], "COMPUTED", "pre-fix code, inflated by the ball-19 indexing bug"),
     ("run_of_play_clip", "[-0.5, 1.0]", "EXISTING", ""),
+    ("pressure_weights", str(pr.PRESSURE_WEIGHTS), "EXISTING", "each term is divided by its own SD over all legal balls, then weighted"),
     ("bands_recut_after_excess", True, "EXISTING", "_add_expected_shock recomputes pressure and bands after the Elo walk"),
 ], columns=["parameter", "value", "status", "notes"])
 reg.save(params, "06_shock/shock_parameters.csv", "player_ratings.py source; scales recomputed in section 02", "read from code + replicated")
@@ -136,22 +157,28 @@ reg.save(params, "06_shock/shock_parameters.csv", "player_ratings.py source; sca
 # ---------------------------------------------------------------- 07 rankings
 
 
-def ranking_table(table, legacy, skill):
+pbat, pbowl = P["prefix_batters"], P["prefix_bowlers"]
+
+
+def ranking_table(table, previous, legacy, skill):
     r = table.loc[table["ranked"]].sort_values("rank").copy()
     for comp in COMPONENTS:
         r[f"contrib_{comp}"] = r[comp] * WEIGHTS[comp]
+    r = r.merge(previous[["player_id", "rank", "composite", "high_n_eff"]].rename(columns={"rank": "pre_fix_rank", "composite": "pre_fix_composite", "high_n_eff": "pre_fix_high_n_eff"}),
+                on="player_id", how="left")
+    r["rank_change_vs_pre_fix"] = r["pre_fix_rank"] - r["rank"]
     r = r.merge(legacy[["player_id", "rank", "composite", "form"]].rename(columns={"rank": "legacy_rank", "composite": "legacy_composite", "form": "legacy_form_z"}),
                 on="player_id", how="left")
-    r["rank_change_vs_legacy"] = r["legacy_rank"] - r["rank"]
     r.insert(0, "skill", skill)
     r["status"] = "COMPUTED"
     return r
 
 
-fb = ranking_table(bat, lbat, "batter")
-fw = ranking_table(bowl, lbowl, "bowler")
-reg.save(fb, "07_rankings/final_batter_rankings.csv", "score_batters (current 7-term) + git 29956ed 8-term for legacy columns", "ranked players only")
-reg.save(fw, "07_rankings/final_bowler_rankings.csv", "score_bowlers (current 7-term) + git 29956ed 8-term for legacy columns", "ranked players only")
+fb = ranking_table(bat, pbat, lbat, "batter")
+fw = ranking_table(bowl, pbowl, lbowl, "bowler")
+SRC_RANK = "score_* (current model) + reference/player_ratings_pre_fix.py for pre_fix_* + git 29956ed 8-term (on the pre-fix frame) for legacy_*"
+reg.save(fb, "07_rankings/final_batter_rankings.csv", SRC_RANK, "ranked players only; pre_fix_rank is blank where the player was not ranked before the fixes")
+reg.save(fw, "07_rankings/final_bowler_rankings.csv", SRC_RANK, "ranked players only")
 for n in (10, 20):
     reg.save(fb.head(n), f"07_rankings/top{n}_batters.csv", "final_batter_rankings", f"first {n}")
     reg.save(fw.head(n), f"07_rankings/top{n}_bowlers.csv", "final_bowler_rankings", f"first {n}")
@@ -161,8 +188,18 @@ reg.fact("ranked_batters", int(bat["ranked"].sum()))
 reg.fact("ranked_bowlers", int(bowl["ranked"].sum()))
 reg.fact("top10_batters", fb.head(10)[["rank", "player_name", "role", "composite"]].values.tolist())
 reg.fact("top10_bowlers", fw.head(10)[["rank", "player_name", "role", "composite"]].values.tolist())
-reg.fact("top20_batters", fb.head(20)[["rank", "player_name", "role", "composite", "legacy_rank"]].values.tolist())
-reg.fact("top20_bowlers", fw.head(20)[["rank", "player_name", "role", "composite", "legacy_rank"]].values.tolist())
+reg.fact("top20_batters", fb.head(20)[["rank", "player_name", "role", "composite", "pre_fix_rank"]].values.tolist())
+reg.fact("top20_bowlers", fw.head(20)[["rank", "player_name", "role", "composite", "pre_fix_rank"]].values.tolist())
+for skill, table in [("batter", pbat), ("bowler", pbowl)]:
+    top = table.loc[table["ranked"]].sort_values("rank")
+    reg.fact(f"pre_fix_ranked_{skill}s", int(table["ranked"].sum()))
+    reg.fact(f"pre_fix_top10_{skill}s", top.head(10)[["rank", "player_name", "role", "composite", "high_n_eff"]].values.tolist())
+    reg.fact(f"pre_fix_top10_{skill}_high_lt60", int(top.head(10)["high_n_eff"].lt(60).sum()))
+    reg.fact(f"pre_fix_top10_{skill}_high_lt60_names", top.head(10).loc[top.head(10)["high_n_eff"].lt(60), ["player_name", "high_n_eff"]].values.tolist())
+for skill, frame in [("batter", fb), ("bowler", fw)]:
+    reg.fact(f"top10_{skill}_high_lt60", int(frame.head(10)["high_n_eff"].lt(60).sum()))
+    reg.fact(f"top10_{skill}_min_high_n_eff", float(frame.head(10)["high_n_eff"].min()))
+    reg.fact(f"top20_{skill}_min_high_n_eff", float(frame.head(20)["high_n_eff"].min()))
 
 dist = []
 for skill, table in [("batter", bat), ("bowler", bowl)]:
@@ -201,7 +238,7 @@ def order(score: pd.Series, ids: pd.Series) -> pd.Series:
     return pd.Series(np.arange(1, len(frame) + 1), index=frame["id"].to_numpy())
 
 
-def variants(table, legacy, pooled, diag, no_super, skill):
+def variants(table, alternatives, pooled, skill):
     r = table.loc[table["ranked"]].set_index("player_id")
     ids = pd.Series(r.index, index=r.index)
     out = {"full_current": r["rank"].astype(int)}
@@ -213,16 +250,11 @@ def variants(table, legacy, pooled, diag, no_super, skill):
     for comp in COMPONENTS:
         keep = [c for c in COMPONENTS if c != comp]
         out[f"drop_{comp}"] = order(z[keep].mul(pd.Series(WEIGHTS)[keep]).sum(axis=1), ids)
-    lg = legacy.set_index("player_id").reindex(r.index)
-    out["legacy_8_term_with_form"] = order(lg["composite"], ids)
-    ns = no_super.set_index("player_id").reindex(r.index)
-    out["exclude_super_overs"] = order(ns["composite"], ids)
+    for name, alt in alternatives.items():
+        out[name] = order(alt.set_index("player_id")["composite"].reindex(r.index), ids)
     if pooled is not None:
         pooled_rank = pooled.set_index("player_id")["rank"].reindex(r.index)
-        out["no_role_split_pooled_z"] = pooled_rank.astype(int)
-    if diag is not None:
-        d = diag.set_index("player_id").reindex(r.index)
-        out["diagnostic_runofplay_bugfree"] = order(d["composite"], ids)
+        out["role_blend_0_pooled_z"] = pooled_rank.astype(int)
     frame = pd.DataFrame(out)
     frame.insert(0, "player_name", r["player_name"])
     frame.insert(1, "role", r["role"])
@@ -230,29 +262,75 @@ def variants(table, legacy, pooled, diag, no_super, skill):
     return frame
 
 
-# Diagnostic: rebuild bands with the ball-19 bug removed, then rescore. Official numbers are untouched.
-D = legal.copy()
-D["pressure_bat"] = L["base_bat"].reindex(D.index) + L["shock_bat"].reindex(D.index) + L["delta_bat_bugfree_diagnostic"].reindex(D.index)
-D["pressure_bowl"] = L["base_bowl"].reindex(D.index) + L["shock_bowl"].reindex(D.index) + L["delta_bowl_bugfree_diagnostic"].reindex(D.index)
-D["band"] = pr._cut_band(D["pressure_bat"])
-D["band_bowl"] = pr._cut_band_within(D["pressure_bowl"], D["pace_or_spin"])
-reg.fact("diag_rop_band_agreement_bat", float((D["band"] == legal["band"]).mean()))
-reg.fact("diag_rop_band_agreement_bowl", float((D["band_bowl"] == legal["band_bowl"]).mean()))
-diag_bat = pr.score_batters(D)
-diag_bowl = pr.score_bowlers(D, work)
-reg.fact("diag_rop_ranked_batters", int(diag_bat["ranked"].sum()))
-reg.fact("diag_rop_ranked_bowlers", int(diag_bowl["ranked"].sum()))
+# Rescoring variants on the official legal frame. Official numbers are untouched; module constants are restored.
+official_blend = pr.ROLE_BLEND
+pr.ROLE_BLEND = 1.0
+role_only_bat = pr.score_batters(legal)
+pr.ROLE_BLEND = official_blend
+pooled_role_only = role_only_bat.loc[role_only_bat["ranked"]].sort_values("rank")[["player_name", "role"]].assign(role=lambda f: f["role"].map(
+    {"top order": "top", "middle order": "middle", "lower order": "lower"}))
 
-vb = variants(bat, lbat, P["pooled_current"], diag_bat, P["no_super_batters"], "batter")
-vw = variants(bowl, lbowl, None, diag_bowl, P["no_super_bowlers"], "bowler")
+official_weights = dict(pr.PRESSURE_WEIGHTS)
+
+
+def band_profile(name, weights, band_bat, band_bowl):
+    """Where a set of bands puts the high band. Bands are aligned to the readout frame L."""
+    rec = recent_event_shares(band_bat, band_bowl)
+    pace, high_bowl = L["pace_or_spin"].eq("Pace"), band_bowl.eq("high")
+    row = {"variant": name, "w_situation": weights[0], "w_shock": weights[1], "w_run_of_play": weights[2],
+           "batter_high_band_balls_within_6_after_wicket": rec["bat_high_after_wicket"],
+           "bowler_high_band_balls_after_four_or_six_in_last_6": rec["bowl_high_after_boundary"]}
+    for label, mask in [("final", L["stage"].eq("Final")), ("league", L["stage"].eq("League")), ("death", L["phase"].eq("death")),
+                        ("powerplay", L["phase"].eq("powerplay")), ("super_over", L["is_super_over"])]:
+        row[f"batter_high_share_of_{label}_balls"] = float(band_bat[mask].eq("high").mean())
+    for phase in ("powerplay", "middle", "death"):
+        row[f"pace_high_band_share_in_{phase}"] = float(L.loc[pace & high_bowl, "phase"].eq(phase).mean())
+    row["bowler_high_share_of_death_balls"] = float(high_bowl[L["phase"].eq("death")].mean())
+    row["batter_band_agreement_with_official"] = float((band_bat == L["band"]).mean())
+    row["bowler_band_agreement_with_official"] = float((band_bowl == L["band_bowl"]).mean())
+    return row
+
+
+WEIGHT_VARIANTS = {"pressure_weights_40_35_25": (0.40, 0.35, 0.25), "pressure_weights_50_30_20": (0.50, 0.30, 0.20),
+                   "pressure_weights_70_20_10": (0.70, 0.20, 0.10), "pressure_weights_equal_thirds": (1 / 3, 1 / 3, 1 / 3)}
+weight_bat, weight_bowl = {}, {}
+weight_rows = [band_profile("pre_fix_model (raw sum, ball-19 bug)", (np.nan,) * 3, PF["band"], PF["band_bowl"]),
+               band_profile("official", tuple(official_weights.values()), L["band"], L["band_bowl"])]
+for name, weights in WEIGHT_VARIANTS.items():
+    pr.PRESSURE_WEIGHTS = dict(zip(("situation", "shock", "run_of_play"), weights))
+    V = pr._combine_pressure(legal.copy())
+    weight_rows.append(band_profile(name, weights, V["band"].reindex(L.index), V["band_bowl"].reindex(L.index)))
+    weight_bat[name] = pr.score_batters(V)
+    weight_bowl[name] = pr.score_bowlers(V, work)
+pr.PRESSURE_WEIGHTS = official_weights
+# The raw sum the pre-fix model used, with the ball-19 bug fixed: separates the weighting change from the bug fix.
+V = legal.copy()
+for side in ("bat", "bowl"):
+    V[f"pressure_{side}"] = V[f"situation_{side}"] + V[f"shock_{side}"] + V[f"delta_{side}"]
+V["band"] = pr._cut_band(V["pressure_bat"])
+V["band_bowl"] = pr._cut_band_within(V["pressure_bowl"], V["pace_or_spin"])
+weight_rows.append(band_profile("pressure_raw_sum_bug_fixed", (np.nan,) * 3, V["band"].reindex(L.index), V["band_bowl"].reindex(L.index)))
+weight_bat["pressure_raw_sum_bug_fixed"] = pr.score_batters(V)
+weight_bowl["pressure_raw_sum_bug_fixed"] = pr.score_bowlers(V, work)
+weight_tab = pd.DataFrame(weight_rows)
+weight_tab["base_rate_balls_within_6_after_wicket"] = float(after.mean())
+weight_tab["base_rate_balls_after_four_or_six_in_last_6"] = float(four_or_six_last6.mean())
+
+alts_bat = {"previous_model_before_fixes": pbat, "role_blend_1_role_only_z": role_only_bat, "exclude_super_overs": P["no_super_batters"],
+            "legacy_8_term_with_form_pre_fix_frame": lbat, **weight_bat}
+alts_bowl = {"previous_model_before_fixes": pbowl, "exclude_super_overs": P["no_super_bowlers"],
+             "legacy_8_term_with_form_pre_fix_frame": lbowl, **weight_bowl}
+vb = variants(bat, alts_bat, P["pooled_current"], "batter")
+vw = variants(bowl, alts_bowl, None, "bowler")
 for skill, ns, cur in [("batter", P["no_super_batters"], bat), ("bowler", P["no_super_bowlers"], bowl)]:
     reg.fact(f"noso_ranked_{skill}s", int(ns["ranked"].sum()))
     reg.fact(f"noso_same_ranked_set_{skill}", bool(set(ns.loc[ns["ranked"], "player_id"]) == set(cur.loc[cur["ranked"], "player_id"])))
     gap = (cur.set_index("player_id")["composite"] - ns.set_index("player_id")["composite"].reindex(cur["player_id"]).to_numpy()).abs()
     reg.fact(f"noso_max_abs_composite_change_{skill}", float(gap.max()))
-reg.save(vb.reset_index(), "08_validation/ablation_batter_rank_changes.csv", "ratings tables; git 29956ed legacy; diagnostic rescoring",
-         "rank of each ranked batter under each variant (ties broken by player_id as in score_batters)")
-reg.save(vw.reset_index(), "08_validation/ablation_bowler_rank_changes.csv", "ratings tables; git 29956ed legacy; diagnostic rescoring", "same for bowlers")
+SRC_ABL = "ratings tables; pre-fix model; git 29956ed legacy; rescoring with ROLE_BLEND or PRESSURE_WEIGHTS changed"
+reg.save(vb.reset_index(), "08_validation/ablation_batter_rank_changes.csv", SRC_ABL,
+         "rank of each currently ranked batter under each variant, ordered within the current ranked set (ties broken by player_id as in score_batters)")
+reg.save(vw.reset_index(), "08_validation/ablation_bowler_rank_changes.csv", SRC_ABL, "same for bowlers")
 
 ex23 = pd.read_csv(ROOT / "exports" / "23_ablation_ranks.csv")
 chk = bat.loc[bat["ranked"]].copy()
@@ -284,10 +362,13 @@ for skill, frame in [("batter", vb), ("bowler", vw)]:
 summary = pd.DataFrame(summary)
 summary["status"] = "COMPUTED"
 summary["note"] = np.select(
-    [summary["variant"].str.startswith("diagnostic"), summary["variant"].eq("exclude_super_overs"), summary["variant"].eq("legacy_8_term_with_form")],
-    ["diagnostic only: shows the size of a documented bug; not an official result",
-     "data variant: super-over rows removed before add_situation (the pipeline before super overs were included)",
-     "git 29956ed scoring functions (8 terms with Form) on the same legal frame"],
+    [summary["variant"].eq("previous_model_before_fixes"), summary["variant"].eq("exclude_super_overs"),
+     summary["variant"].str.startswith("legacy_8_term"), summary["variant"].str.startswith("role_blend"), summary["variant"].str.startswith("pressure_weights")],
+    ["the model before the November fixes (ball-19 bug, raw-sum pressure, no wickets-down cell, role-only z, high floor 30, mixed clutch basis), run in full; ordered within the current ranked set",
+     "data variant: super-over rows removed before add_situation",
+     "git 29956ed scoring functions (8 terms with Form) on the pre-fix legal frame; differs from the current model by Form and by every fix",
+     "batter z-scores with ROLE_BLEND 1 (within role only, the pre-fix choice) or 0 (pooled across all batters); official blend is 0.5",
+     "bands rebuilt with other PRESSURE_WEIGHTS (situation/shock/run of play), then rescored"],
     "re-weighting of the official component z-scores")
 reg.save(summary, "08_validation/ablation_summary.csv", "ablation rank tables", "Spearman, Kendall tau-b, top-k overlap and Jaccard vs the official ranking")
 for _, r in summary.iterrows():
@@ -296,12 +377,56 @@ for _, r in summary.iterrows():
 for name in ["Vaibhav Sooryavanshi", "Rahmanullah Gurbaz"]:
     hit = vb.loc[vb["player_name"].eq(name)]
     for c in vb.columns[3:]:
-        reg.fact(f"abl_rank_{name}_{c}", int(hit[c].iloc[0]))
+        reg.fact(f"abl_rank_{name}_{c}", int(hit[c].iloc[0]) if len(hit) else None)
+
+for skill, frame in [("batter", vb), ("bowler", vw)]:
+    for name in weight_bat:
+        s = summary.loc[summary["skill"].eq(skill) & summary["variant"].eq(name)].iloc[0]
+        weight_tab.loc[weight_tab["variant"].eq(name), f"{skill}_spearman_vs_official"] = s["spearman_vs_full"]
+        weight_tab.loc[weight_tab["variant"].eq(name), f"{skill}_top20_overlap_vs_official"] = s["top20_overlap"]
+    s = summary.loc[summary["skill"].eq(skill) & summary["variant"].eq("previous_model_before_fixes")].iloc[0]
+    weight_tab.loc[weight_tab["variant"].str.startswith("pre_fix"), f"{skill}_spearman_vs_official"] = s["spearman_vs_full"]
+    weight_tab.loc[weight_tab["variant"].str.startswith("pre_fix"), f"{skill}_top20_overlap_vs_official"] = s["top20_overlap"]
+weight_tab["status"] = "COMPUTED"
+reg.save(weight_tab, "08_validation/pressure_weight_sensitivity.csv", "legal frame rebanded with _combine_pressure under each PRESSURE_WEIGHTS; pre-fix model",
+         "how much of the high band is a recent wicket or boundary, where the high band sits, and how far the rankings move; spearman and overlap rows of the pre-fix model compare the whole pre-fix model")
+for _, r in weight_tab.iterrows():
+    tag = "pre_fix" if str(r["variant"]).startswith("pre_fix") else r["variant"]
+    for c in ["batter_high_band_balls_within_6_after_wicket", "bowler_high_band_balls_after_four_or_six_in_last_6", "batter_high_share_of_final_balls",
+              "batter_high_share_of_league_balls", "batter_high_share_of_death_balls", "batter_high_share_of_powerplay_balls", "batter_high_share_of_super_over_balls",
+              "pace_high_band_share_in_powerplay", "pace_high_band_share_in_middle", "pace_high_band_share_in_death", "bowler_high_share_of_death_balls"]:
+        reg.fact(f"pw_{tag}_{c}", float(r[c]))
+
+# ranking floor: the composite does not depend on the floor, so other floors are a filter on the same scores
+floor_rows = []
+for skill, table, prev in [("batter", bat, pbat), ("bowler", bowl, pbowl)]:
+    official_top20 = set(table.loc[table["ranked"]].nsmallest(20, "rank")["player_id"])
+    for floor in (30, 45, 60, 90):
+        keep = table.loc[table["n_eff"].ge(pr.RANK_BALLS) & table["high_n_eff"].ge(floor)].sort_values(["composite", "player_id"], ascending=[False, True])
+        top10, top20 = keep.head(10), keep.head(20)
+        floor_rows.append({"skill": skill, "high_n_eff_floor": floor, "official": floor == pr.RANK_HIGH_BALLS, "ranked": len(keep),
+                           "top10_high_n_eff_below_60": int(top10["high_n_eff"].lt(60).sum()), "top10_min_high_n_eff": float(top10["high_n_eff"].min()),
+                           "top20_overlap_with_official": len(set(top20["player_id"]) & official_top20),
+                           "top10": "; ".join(top10["player_name"]), "status": "COMPUTED"})
+floor_tab = pd.DataFrame(floor_rows)
+reg.save(floor_tab, "08_validation/ranking_floor_sensitivity.csv", "ratings tables (composite unchanged by the floor)",
+         f"rank players with n_eff >= {pr.RANK_BALLS} and high n_eff >= floor; official floor is {pr.RANK_HIGH_BALLS} (was 30 before the fix)")
+for _, r in floor_tab.iterrows():
+    reg.fact(f"floor_{r['skill']}_{r['high_n_eff_floor']}_ranked", int(r["ranked"]))
+    reg.fact(f"floor_{r['skill']}_{r['high_n_eff_floor']}_top20_overlap", int(r["top20_overlap_with_official"]))
+    reg.fact(f"floor_{r['skill']}_{r['high_n_eff_floor']}_top10_lt60", int(r["top10_high_n_eff_below_60"]))
+
+# Form isolation: legacy 8-term and pre-fix 7-term scoring on the same pre-fix frame differ only by Form.
+for skill, prev, legacy in [("batter", pbat, lbat), ("bowler", pbowl, lbowl)]:
+    r = prev.loc[prev["ranked"]].set_index("player_id")
+    lg = legacy.set_index("player_id").reindex(r.index)
+    reg.fact(f"form_isolation_{skill}_spearman", float(stats.spearmanr(r["composite"], lg["composite"])[0]))
+    reg.fact(f"form_isolation_{skill}_top20_overlap", len(set(r.nsmallest(20, "rank").index) & set(lg.loc[lg["ranked"]].nsmallest(20, "rank").index)))
 
 movers = []
 for skill, frame in [("batter", vb), ("bowler", vw)]:
-    for var, label in [("baseline_only", "full composite vs baseline only"), ("legacy_8_term_with_form", "current 7-term vs legacy 8-term"),
-                       ("no_role_split_pooled_z", "role-split z vs pooled z"), ("diagnostic_runofplay_bugfree", "official vs ball-19 bug removed (diagnostic)"),
+    for var, label in [("baseline_only", "full composite vs baseline only"), ("previous_model_before_fixes", "current model vs the model before the fixes"),
+                       ("role_blend_1_role_only_z", "role blend 0.5 vs role-only z"), ("role_blend_0_pooled_z", "role blend 0.5 vs pooled z"),
                        ("exclude_super_overs", "super overs included vs excluded")]:
         if var not in frame.columns:
             continue
@@ -372,14 +497,15 @@ for _, r in infl.iterrows():
 cov = []
 for skill, table in [("batter", bat), ("bowler", bowl)]:
     for role, g in table.groupby("role"):
+        hf, nf = pr.RANK_HIGH_BALLS, pr.RANK_BALLS
         cov.append({"skill": skill, "role": role, "players": len(g), "n_eff_ge_30_reference": int(g["n_eff"].ge(30).sum()),
-                    "n_eff_ge_120": int(g["n_eff"].ge(120).sum()), "high_n_eff_ge_30": int(g["high_n_eff"].ge(30).sum()),
+                    f"n_eff_ge_{nf}": int(g["n_eff"].ge(nf).sum()), f"high_n_eff_ge_{hf}": int(g["high_n_eff"].ge(hf).sum()),
                     "ranked": int(g["ranked"].sum()), "ranked_share_of_players": float(g["ranked"].mean()),
                     "ranked_share_of_reference": float(g["ranked"].sum() / max(g["n_eff"].ge(30).sum(), 1)),
                     "share_of_ranked_pool": float(g["ranked"].sum() / table["ranked"].sum()),
-                    "fail_n_eff_only": int((g["n_eff"].lt(120) & g["high_n_eff"].ge(30)).sum()),
-                    "fail_high_n_only": int((g["n_eff"].ge(120) & g["high_n_eff"].lt(30)).sum()),
-                    "fail_both": int((g["n_eff"].lt(120) & g["high_n_eff"].lt(30)).sum()), "status": "COMPUTED"})
+                    "fail_n_eff_only": int((g["n_eff"].lt(nf) & g["high_n_eff"].ge(hf)).sum()),
+                    "fail_high_n_only": int((g["n_eff"].ge(nf) & g["high_n_eff"].lt(hf)).sum()),
+                    "fail_both": int((g["n_eff"].lt(nf) & g["high_n_eff"].lt(hf)).sum()), "status": "COMPUTED"})
 cov = pd.DataFrame(cov)
 reg.save(cov, "08_validation/role_coverage.csv", "ratings tables", "eligibility counts by role")
 ex19 = pd.read_csv(ROOT / "exports" / "19_reference_population_sizes.csv")
@@ -393,8 +519,11 @@ tok = {"top order": "top", "middle order": "middle", "lower order": "lower"}
 rep = []
 pool_b = bat.loc[bat["ranked"]]
 lists = {
-    "current_with_role_split": bat.loc[bat["ranked"]].sort_values("rank")[["player_name", "role"]].assign(role=lambda f: f["role"].map(tok)),
-    "current_without_role_split": P["pooled_current"][["player_name", "role"]],
+    "current_role_blend_0_5_official": bat.loc[bat["ranked"]].sort_values("rank")[["player_name", "role"]].assign(role=lambda f: f["role"].map(tok)),
+    "current_role_blend_1_role_only": pooled_role_only,
+    "current_role_blend_0_pooled": P["pooled_current"][["player_name", "role"]],
+    "pre_fix_with_role_split": pbat.loc[pbat["ranked"]].sort_values("rank")[["player_name", "role"]].assign(role=lambda f: f["role"].map(tok)),
+    "pre_fix_without_role_split": P["pooled_prefix"][["player_name", "role"]],
     "legacy_8term_with_role_split": lbat.loc[lbat["ranked"]].sort_values("rank")[["player_name", "role"]].assign(role=lambda f: f["role"].map(tok)),
     "legacy_8term_without_role_split": P["pooled_legacy"][["player_name", "role"]],
 }
@@ -457,8 +586,10 @@ for name in SANITY_PLAYERS:
         if not primary and h["legal_balls"] < 120:
             continue
         lg = legacy.loc[legacy["player_id"].eq(h["player_id"])].iloc[0]
+        pv = (pbat if skill == "batter" else pbowl).set_index("player_id").loc[h["player_id"]]
         reason = "" if h["ranked"] else "; ".join(x for x in [
-            f"n_eff {h['n_eff']:.1f} < 120" if h["n_eff"] < 120 else "", f"high_n_eff {h['high_n_eff']:.1f} < 30" if h["high_n_eff"] < 30 else ""] if x)
+            f"n_eff {h['n_eff']:.1f} < {pr.RANK_BALLS}" if h["n_eff"] < pr.RANK_BALLS else "",
+            f"high_n_eff {h['high_n_eff']:.1f} < {pr.RANK_HIGH_BALLS}" if h["high_n_eff"] < pr.RANK_HIGH_BALLS else ""] if x)
         row = {"player_name": name, "skill": skill, "player_id": h["player_id"], "role": h["role"], "legal_balls": h["legal_balls"],
                "n_eff": h["n_eff"], "high_n_eff": h["high_n_eff"], "ranked": bool(h["ranked"]), "reason_not_ranked": reason,
                "rank": h["rank"], "ranked_pool": int(table["ranked"].sum()),
@@ -466,13 +597,17 @@ for name in SANITY_PLAYERS:
                "composite": h["composite"]}
         for c in COMPONENTS:
             row[c] = h[c]
+        row["pre_fix_rank"] = pv["rank"]
+        row["pre_fix_ranked_pool"] = int((pbat if skill == "batter" else pbowl)["ranked"].sum())
+        row["pre_fix_composite"] = pv["composite"]
+        row["pre_fix_high_n_eff"] = pv["high_n_eff"]
         row["legacy_form_z"] = lg["form"]
         row["legacy_rank_8term"] = lg["rank"]
         if h["ranked"]:
             v = vframe.loc[h["player_id"]]
             row["baseline_only_rank"] = v["baseline_only"]
-            row["no_role_split_rank"] = v.get("no_role_split_pooled_z", np.nan)
-            row["bugfree_runofplay_rank_diagnostic"] = v.get("diagnostic_runofplay_bugfree", np.nan)
+            row["role_only_z_rank"] = v.get("role_blend_1_role_only_z", np.nan)
+            row["pooled_z_rank"] = v.get("role_blend_0_pooled_z", np.nan)
             row["rank_with_super_overs_excluded"] = v.get("exclude_super_overs", np.nan)
         if skill == "batter":
             row.update({"runs": h["runs"], "strike_rate_level_weighted": h["strike_rate"], "average_level_weighted": h["average"]})
@@ -486,29 +621,39 @@ sanity = pd.DataFrame(rows)
 reg.save(sanity, "08_validation/sanity_check_players.csv", "ratings tables; legacy; ablation; final Elo per ladder", "one row per player and skill")
 for _, r in sanity.iterrows():
     tag = f"{r['player_name']}_{r['skill']}"
-    for c in ["rank", "composite", "legacy_rank_8term", "baseline_only_rank", "n_eff", "high_n_eff", "ranked", "no_role_split_rank", "bugfree_runofplay_rank_diagnostic"] + COMPONENTS:
+    for c in ["rank", "composite", "pre_fix_rank", "legacy_rank_8term", "baseline_only_rank", "n_eff", "high_n_eff", "ranked", "role_only_z_rank", "pooled_z_rank"] + COMPONENTS:
         if c in r and pd.notna(r[c]):
             reg.fact(f"sp_{tag}_{c}", r[c] if not isinstance(r[c], (np.floating, float)) else float(r[c]))
     reg.fact(f"sp_{tag}_reason", r["reason_not_ranked"])
 
-# ---------------------------------------------------------------- diagnostic: bowler clutch basis
+# ---------------------------------------------------------------- bowler clutch basis (BUG-03), before and after the fix
 bm = P["traces"]["bowlers"]["math"].set_index("player_id")
+pm = P["prefix_traces"]["bowlers"]["math"].set_index("player_id")
 lw = legal.groupby("bowler_id").apply(lambda f: 6 * (f["charged_runs"] * f["level_weight"]).sum() / f["level_weight"].sum(), include_groups=False)
-cb = pd.DataFrame({"economy_career_all_deliveries": bm["economy"], "economy_career_legal_balls_only": lw.reindex(bm.index)})
+cb = pd.DataFrame({"economy_career_all_deliveries": bm["economy"], "economy_career_legal_balls_only": lw.reindex(bm.index),
+                   "clutch_comparison_economy_now": bm["clutch_economy"]})
 cb["difference"] = cb["economy_career_all_deliveries"] - cb["economy_career_legal_balls_only"]
-scale = float(bm["clutch_scale"].iloc[0])
-cb["difference_in_clutch_scale_units"] = cb["difference"] / scale
+scale, scale_pre = float(bm["clutch_scale"].iloc[0]), float(pm["clutch_scale"].iloc[0])
+cb["difference_in_pre_fix_clutch_scale_units"] = cb["difference"] / scale_pre
 cb = cb.join(bowl.set_index("player_id")[["player_name", "ranked", "rank", "clutch"]])
-cr = P["traces"]["bowlers"]["clutch"]
-cr_beat = float((cr["own_gap"] > 0).mean())
-alt_gap = (cr["bowler_id"].map(cb["economy_career_legal_balls_only"]) - cr["metric"]) / scale
+cb = cb.join(pbowl.set_index("player_id")[["rank", "clutch"]].rename(columns={"rank": "pre_fix_rank", "clutch": "pre_fix_clutch_z"}))
+cr, cr_pre = P["traces"]["bowlers"]["clutch"], P["prefix_traces"]["bowlers"]["clutch"]
 reg.fact("clutch_bowl_scale", scale)
+reg.fact("clutch_bowl_scale_pre_fix", scale_pre)
 reg.fact("clutch_bowl_basis_diff_mean_ranked", float(cb.loc[cb["ranked"], "difference"].mean()))
-reg.fact("clutch_bowl_basis_diff_units_mean_ranked", float(cb.loc[cb["ranked"], "difference_in_clutch_scale_units"].mean()))
-reg.fact("clutch_bowl_share_spells_beating_own_rate_as_executed", cr_beat)
-reg.fact("clutch_bowl_share_spells_beating_own_rate_same_basis", float((alt_gap > 0).mean()))
+reg.fact("clutch_bowl_basis_diff_units_mean_ranked", float(cb.loc[cb["ranked"], "difference_in_pre_fix_clutch_scale_units"].mean()))
+reg.fact("clutch_bowl_comparison_basis_maxgap_vs_legal_economy", float((cb["clutch_comparison_economy_now"] - cb["economy_career_legal_balls_only"]).abs().max()))
+reg.fact("clutch_bowl_share_spells_beating_own_rate_pre_fix", float((cr_pre["own_gap"] > 0).mean()))
+reg.fact("clutch_bowl_share_spells_beating_own_rate_now", float((cr["own_gap"] > 0).mean()))
+reg.fact("clutch_bowl_mean_own_gap_pre_fix", float(cr_pre["own_gap"].mean()))
+reg.fact("clutch_bowl_mean_own_gap_now", float(cr["own_gap"].mean()))
+# Like for like: the current high-band spells, compared with the old all-deliveries career economy.
+old_basis_gap = (cr["bowler_id"].map(cb["economy_career_all_deliveries"]) - cr["metric"]) / scale
+reg.fact("clutch_bowl_share_spells_beating_own_rate_old_basis_same_spells", float((old_basis_gap > 0).mean()))
+reg.fact("clutch_bowl_mean_own_gap_old_basis_same_spells", float(old_basis_gap.mean()))
 cb = cb.reset_index()
 cb["status"] = "COMPUTED"
-reg.save(cb, "08_validation/diagnostic_bowler_clutch_basis.csv", "TRACES bowler math; legal frame", "career economy with vs without wide/no-ball runs (the clutch comparison uses legal-ball spell economy)")
+reg.save(cb, "08_validation/diagnostic_bowler_clutch_basis.csv", "TRACES bowler math (current and pre-fix); legal frame",
+         "career economy with vs without wide/no-ball runs; the current clutch compares legal-ball spell economy with legal-ball career economy")
 reg.close()
 print("c done")
