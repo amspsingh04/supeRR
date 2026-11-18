@@ -364,6 +364,8 @@ class Handler(BaseHTTPRequestHandler):
             kind = "text/css; charset=utf-8"
         elif file_path.suffix == ".js":
             kind = "text/javascript; charset=utf-8"
+        elif file_path.suffix == ".pdf":
+            kind = "application/pdf"
         payload = file_path.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", kind)

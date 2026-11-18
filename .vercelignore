@@ -1,6 +1,7 @@
 *.csv
 !silver/matches.csv
 *.pdf
+!website/static/ShouryaPratapSingh_SupeRR_Methodology_Readout.pdf
 *.ipynb
 player_ratings.py
 ratings/

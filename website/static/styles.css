@@ -69,12 +69,13 @@ h3 { font-family: Georgia, "Times New Roman", serif; font-size: 24px; margin: 0 
 .sandbox {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  gap: 24px;
+  gap: 28px;
   align-items: start;
   border: 1px solid var(--ink);
   border-radius: 16px;
-  padding: 22px 24px;
+  padding: 28px 28px;
   background: var(--card);
+  margin-bottom: 20px;
 }
 .sandbox .play-explain p { max-width: none; }
 .play-row {
@@ -93,9 +94,9 @@ h3 { font-family: Georgia, "Times New Roman", serif; font-size: 24px; margin: 0 
 .play-explain p { margin: 0 0 14px; line-height: 1.5; max-width: 46ch; }
 .link-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin: 22px 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 48px 0 40px;
 }
 .link-box {
   display: flex;
@@ -128,8 +129,9 @@ h3 { font-family: Georgia, "Times New Roman", serif; font-size: 24px; margin: 0 
 .board-ten {
   display: grid;
   grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(300px, 380px);
-  gap: 22px;
+  gap: 32px;
   align-items: stretch;
+  margin-bottom: 12px;
 }
 .board-copy h2 { font-size: 40px; margin-bottom: 12px; }
 .board-copy p { margin: 0 0 12px; line-height: 1.55; color: var(--ink); }
@@ -299,7 +301,7 @@ tr.clickable:hover { background: var(--accent-soft); }
 .positive { color: var(--accent); }
 .negative { color: var(--warn); }
 
-.metrics { margin-top: 28px; }
+.metrics { margin-top: 48px; }
 .metrics-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 24px; align-items: stretch; margin-bottom: 16px; }
 .metrics-head p { margin: 0; line-height: 1.55; }
 .metrics-formula { margin: 0; display: flex; flex-direction: column; gap: 8px; justify-content: center; }

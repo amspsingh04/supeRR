@@ -349,10 +349,8 @@ async function board() {
       <div id="why-panel" class="why-panel"></div>
     </section>
     <nav class="link-row">
-      <a class="link-box" href="#report"><strong>Report</strong><em>Yet to be attached</em></a>
-      <a class="link-box" href="#notebooks"><strong>Notebooks</strong><em>Yet to be attached</em></a>
-      <a class="link-box" href="#slides"><strong>Slides</strong><em>Yet to be attached</em></a>
-      <a class="link-box" href="#code"><strong>Code</strong><em>Yet to be attached</em></a>
+      <a class="link-box" href="/ShouryaPratapSingh_SupeRR_Methodology_Readout.pdf" target="_blank" rel="noopener"><strong>Report</strong><em>Methodology readout</em></a>
+      <a class="link-box" href="https://www.github.com/amspsingh04/superr" target="_blank" rel="noopener"><strong>Code</strong><em>github.com/amspsingh04/superr</em></a>
     </nav>
     <section class="sandbox">
       <div class="play-explain">
