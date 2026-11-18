@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="330" viewBox="0 0 1280 330" role="img" aria-label="The top three batters and bowlers and their scores">
+<rect width="1280" height="330" fill="#f6f3ec" rx="18"/>
+<rect x="14.5" y="14.5" width="616" height="301" rx="16" fill="#fffdf8" stroke="#ddd6c8"/>
+<text x="40" y="54" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="600" fill="#1c1915">Batters</text>
+<text x="606" y="52" text-anchor="end" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#5e584f">1st to 10th is 0.73 apart</text>
+<circle cx="56" cy="106" r="17" fill="#1f4e79"/>
+<text x="56" y="112" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="600" fill="#fff">1</text>
+<text x="88" y="102" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1c1915">Tim David</text>
+<text x="602" y="102" text-anchor="end" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="600" fill="#1c1915">1.58</text>
+<rect x="88" y="114" width="514" height="8" rx="4" fill="#ece6d8"/>
+<rect x="88" y="114" width="476.9" height="8" rx="4" fill="#1f4e79"/>
+<circle cx="56" cy="168" r="17" fill="#1f4e79"/>
+<text x="56" y="174" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="600" fill="#fff">2</text>
+<text x="88" y="164" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1c1915">Phil Salt</text>
+<text x="602" y="164" text-anchor="end" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="600" fill="#1c1915">1.28</text>
+<rect x="88" y="176" width="514" height="8" rx="4" fill="#ece6d8"/>
+<rect x="88" y="176" width="387.8" height="8" rx="4" fill="#1f4e79"/>
+<circle cx="56" cy="230" r="17" fill="#1f4e79"/>
+<text x="56" y="236" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="600" fill="#fff">3</text>
+<text x="88" y="226" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1c1915">Rinku Singh</text>
+<text x="602" y="226" text-anchor="end" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="600" fill="#1c1915">1.16</text>
+<rect x="88" y="238" width="514" height="8" rx="4" fill="#ece6d8"/>
+<rect x="88" y="238" width="351.9" height="8" rx="4" fill="#1f4e79"/>
+<rect x="650.5" y="14.5" width="616" height="301" rx="16" fill="#fffdf8" stroke="#ddd6c8"/>
+<text x="676" y="54" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="600" fill="#1c1915">Bowlers</text>
+<text x="1242" y="52" text-anchor="end" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#5e584f">1st to 10th is 0.35 apart</text>
+<circle cx="692" cy="106" r="17" fill="#b5462f"/>
+<text x="692" y="112" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="600" fill="#fff">1</text>
+<text x="724" y="102" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1c1915">Mitchell Santner</text>
+<text x="1238" y="102" text-anchor="end" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="600" fill="#1c1915">1.06</text>
+<rect x="724" y="114" width="514" height="8" rx="4" fill="#ece6d8"/>
+<rect x="724" y="114" width="452.1" height="8" rx="4" fill="#b5462f"/>
+<circle cx="692" cy="168" r="17" fill="#b5462f"/>
+<text x="692" y="174" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="600" fill="#fff">2</text>
+<text x="724" y="164" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1c1915">Shaheen Afridi</text>
+<text x="1238" y="164" text-anchor="end" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="600" fill="#1c1915">0.84</text>
+<rect x="724" y="176" width="514" height="8" rx="4" fill="#ece6d8"/>
+<rect x="724" y="176" width="358.4" height="8" rx="4" fill="#b5462f"/>
+<circle cx="692" cy="230" r="17" fill="#b5462f"/>
+<text x="692" y="236" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="600" fill="#fff">3</text>
+<text x="724" y="226" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1c1915">Bhuvneshwar Kumar</text>
+<text x="1238" y="226" text-anchor="end" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="600" fill="#1c1915">0.78</text>
+<rect x="724" y="238" width="514" height="8" rx="4" fill="#ece6d8"/>
+<rect x="724" y="238" width="334.0" height="8" rx="4" fill="#b5462f"/>
+</svg>

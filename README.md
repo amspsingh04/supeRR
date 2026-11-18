@@ -1,151 +1,215 @@
 <p align="center">
-  <strong>SUPERR</strong>
-</p>
-
-<h1 align="center">Who holds their nerve</h1>
-
-<p align="center">
-  Pressure-adjusted ratings for T20 batters and bowlers.<br>
-  A legal ball is scored against what that ball usually yields.<br>
-  Pressure decides which overs count as the hard ones.<br>
-  The published number is how a player does across seven pieces of a career.
+  <img src="assets/hero.svg" alt="Who holds their nerve. Batter pressure through the IPL 2025 final chase." width="100%">
 </p>
 
 <p align="center">
-  <a href="website/static/ShouryaPratapSingh_SupeRR_Methodology_Readout.pdf"><strong>Methodology readout</strong></a>
-  &nbsp;·&nbsp;
-  <a href="research_readout/11_presentation_summary/key_findings.md"><strong>Key findings</strong></a>
-  &nbsp;·&nbsp;
-  <a href="research_readout/README.md"><strong>Full audit</strong></a>
+  <a href="https://superr-shourya.vercel.app/"><img alt="Live dashboard" src="https://img.shields.io/badge/live%20dashboard-open-0f6e56?style=for-the-badge"></a>
+  <a href="website/static/ShouryaPratapSingh_SupeRR_Methodology_Readout.pdf"><img alt="Methodology readout" src="https://img.shields.io/badge/methodology%20readout-PDF-1b2437?style=for-the-badge"></a>
+  <a href="research_readout/README.md"><img alt="Audit" src="https://img.shields.io/badge/audit-research__readout-7030a0?style=for-the-badge"></a>
+  <a href="https://linkedin.com/in/amspsingh04"><img alt="LinkedIn" src="https://img.shields.io/badge/author-LinkedIn-0a66c2?style=for-the-badge"></a>
 </p>
 
 <p align="center">
-  22 Jan 2022 &nbsp;→&nbsp; 1 Nov 2026 &nbsp;·&nbsp; IPL, T20Is, and a lower T20 ladder
+  <img src="assets/kpis.svg" alt="192,445 legal balls, 867 matches, 888 batters and 647 bowlers seen, 141 and 143 ranked, 7 pieces per score" width="100%">
 </p>
 
----
+> **The question.** When a T20 game tightens, who still beats what the ball usually gives?
+> This repo answers it for every batter and bowler in 867 matches of IPL, T20I and lower-level T20, from 22 January 2022 to 1 November 2026.
 
-## The board
+&nbsp;
 
-| | | | | |
-|---|---:|---:|---:|---:|
-| | **192,445** | **867** | **141** | **143** |
-| | legal balls scored | matches with balls | ranked batters | ranked bowlers |
+## The idea, in three moves
 
-A player appears on the board with **120** decay-weighted legal balls, **60** of them in the high-pressure band. Seasons fade by 0.9 a year back from 2026. Emerging and Rising Stars balls count as half a ball. Super overs stay in.
+<table>
+<tr>
+<td width="33%" valign="top">
 
-The same window holds **200,999** deliveries, **888** batters, **647** bowlers and **97** grounds. Nothing in cleaning is deleted. Wides, no-balls and other extras (8,554 deliveries) are not legal balls. Of the legal balls, 101,960 are T20I, 83,755 are IPL, and 6,730 are the lower ladder.
+### 1. Price the ball
+Every legal delivery gets an expected outcome from what balls like it have produced, using only earlier balls. Phase, wickets down, pace or spin, and a rating gap between batter, bowler, sides and ground all move it. What actually happened, minus that, is the **ball value**. A wicket costs four runs.
 
-The live board is `website/`. It opens the top 10, a note on why a name is there, the full lists, one innings ball by ball, and a set of weights you can move. Moving a weight changes the short lists in the browser. The top 10 on the page stays the published order.
+</td>
+<td width="33%" valign="top">
 
-```
-python website/build_data.py
-python website/serve.py
-```
+### 2. Find the hard balls
+A pressure score sorts each ball into quiet, tightening or **high**. Most of it is the match: the occasion, the phase, the wickets, the asking rate. A little is the last six balls, and a little is the last eighteen. Pressure only sorts. It is never a score of its own.
 
-That serves the board at `http://127.0.0.1:8765/`.
+</td>
+<td width="33%" valign="top">
 
----
+### 3. Roll up a career
+Seven pieces, each set against peers and capped, add up to one number per player. Seasons fade by 0.9 a year. A player needs 120 weighted balls, 60 of them under high pressure, before he is ranked at all.
 
-## Published top 10
-
-Higher is better. The batting table is spread out: 1st to 10th is 0.73. The bowling table is a pack: 1st to 10th is 0.35.
-
-| | Batter | Score | Runs | SR | | Bowler | Score | Wkts | Econ |
-|---:|---|---:|---:|---:|---|---|---:|---:|---:|
-| 01 | Tim David | **1.577** | 2,142 | 177 | 01 | Mitchell Santner | **1.055** | 87 | 7.44 |
-| 02 | Phil Salt | **1.283** | 2,764 | 170 | 02 | Shaheen Afridi | **0.837** | 65 | 8.01 |
-| 03 | Rinku Singh | **1.164** | 1,945 | 153 | 03 | Bhuvneshwar Kumar | **0.780** | 115 | 8.29 |
-| 04 | Donovan Ferreira | **1.162** | 561 | 165 | 04 | Abrar Ahmed | **0.769** | 46 | 6.68 |
-| 05 | Jos Buttler | **1.065** | 4,384 | 155 | 05 | Jasprit Bumrah | **0.759** | 85 | 7.27 |
-| 06 | Reeza Hendricks | **0.981** | 1,220 | 147 | 06 | Mohammad Nawaz | **0.758** | 66 | 7.12 |
-| 07 | Glenn Phillips | **0.921** | 1,613 | 148 | 07 | Mark Adair | **0.737** | 56 | 8.72 |
-| 08 | David Miller | **0.913** | 1,898 | 149 | 08 | Sunil Narine | **0.729** | 66 | 6.86 |
-| 09 | George Linde | **0.910** | 227 | 162 | 09 | Mujeeb Ur Rahman | **0.712** | 48 | 7.03 |
-| 10 | Sai Sudharsan | **0.848** | 2,496 | 149 | 10 | Nathan Ellis | **0.705** | 58 | 8.25 |
-
-David’s score is a high career rate, standing out in the innings around him, and the hard spells. Santner’s is the clutch piece, capped, plus the high band. Bumrah’s high-band term is slightly negative. Peers and the baseline carry him. Buttler is 5th, from 34th before the fixes: a long career (strike rate 155, average 42) plus the high-pressure spells. Two IPL finals give some of that back.
-
-Full tables: [`research_readout/07_rankings/final_batter_rankings.csv`](research_readout/07_rankings/final_batter_rankings.csv) and [`final_bowler_rankings.csv`](research_readout/07_rankings/final_bowler_rankings.csv).
+</td>
+</tr>
+</table>
 
 <p align="center">
-  <img src="research_readout/10_charts/slide_09_top_batters/top10_batters_contributions.png" alt="What builds the top 10 batting scores" width="920">
+  <img src="assets/weights.svg" alt="The seven pieces of the score and their weights" width="100%">
 </p>
 
-<p align="center">
-  <img src="research_readout/10_charts/slide_10_top_bowlers/top10_bowlers_contributions.png" alt="What builds the top 10 bowling scores" width="920">
-</p>
-
----
-
-## One ball, then a rank
-
-```
-score = 0.20 baseline + 0.10 quiet + 0.15 squeeze + 0.20 high
-      + 0.15 clutch   + 0.10 same innings + 0.10 consistency
+```mermaid
+flowchart LR
+    A["ball_by_ball.csv<br/>200,999 deliveries"] --> B["Clean and tag<br/>legal ball, phase, chase"]
+    B --> C["Pressure<br/>situation, shock, run of play"]
+    B --> D["Expectation and Elo<br/>xRuns, xWicket"]
+    C --> E["Band<br/>quiet, squeeze, high"]
+    D --> F["Ball value"]
+    E --> G["Seven pieces"]
+    F --> G
+    G --> H["Rank"]
+    classDef n fill:#fffdf8,stroke:#1b2437,color:#1c1915;
+    classDef k fill:#1b2437,stroke:#1b2437,color:#f7f1e8;
+    class A,B,C,D,E,F,G n;
+    class H k;
 ```
 
-| Piece | Weight | What it reads |
-|---|---:|---|
-| Baseline | 0.20 | Career strike rate and average, or economy and balls per wicket, against the phases he actually plays |
-| Quiet balls | 0.10 | Ball value on the quieter half of balls |
-| The squeeze | 0.15 | Ball value once the game starts to tighten |
-| High pressure | 0.20 | Ball value in the tightest fifth |
-| Clutch | 0.15 | A high-pressure spell of 6 balls or more, against his own rate, and against his teammates |
-| Same innings | 0.10 | An innings of 6 balls or more, against teammates and the other side, same day, same pitch |
-| Consistency | 0.10 | A narrower spread of match-to-match ball value |
+&nbsp;
 
-Each piece is a z-score, capped at ±3, on players with at least 30 weighted balls. Batters are compared half inside their role (top, middle, lower) and half against every batter. Bowlers share one pool. A wicket is worth **4 runs** in the ball value.
-
-Pressure sorts the ball. It is not an eighth term.
-
-```
-pressure = 0.60 situation + 0.25 shock + 0.15 run of play
-```
-
-Situation is the occasion, the competition, and how hard that ball is: phase, wickets down, asking rate. A final is three times a league match. A dead rubber, once a bilateral series is already won, is 0.4. Shock is the previous six balls. Run of play is the last six against the last eighteen, and it starts at ball 19. The current ball is never in either window.
+## The top of the table
 
 <p align="center">
-  <img src="research_readout/10_charts/slide_07_shock/ipl2025_final_shock_timeline.png" alt="Pressure through the Punjab Kings chase in the IPL 2025 final" width="920">
+  <img src="assets/podium.svg" alt="The top three batters and bowlers and their scores" width="100%">
 </p>
 
-<p align="center"><em>IPL 2025 final, Punjab Kings chasing 191. Each wicket sends the next six batter balls into the high band. The ball after the fifth wicket is the highest batter pressure in the file.</em></p>
+The full ten of each is on the [live dashboard](https://superr-shourya.vercel.app/), and in [`research_readout/07_rankings/`](research_readout/07_rankings). The batting table has room at the top. The bowling table is a pack.
 
-Expectation is fit only on balls already bowled, in a cell of ladder, phase, pace or spin, and wickets down. Elo, the two teams, and the ground shift that cell. They do not set the rank. A run moves a player rating by 4 and a wicket by 16, from a start of 1,500, and the IPL line never mixes with the T20I line. A ground is a shrunk scoring rate, not an Elo.
+&nbsp;
+
+## What the audit found
+
+Each claim in the readout was checked against the code and the data. These are the ones that survived, and the ones that did not.
+
+| Question | Answer | Evidence |
+|---|---|---|
+| **Does "high pressure" mean something?** | The match now explains **68.7%** of batter pressure, up from 7.1% when a recent wicket dominated. **86.4%** of final balls sit in the high band. Super overs reach it too: 90.9% for batters, 100% for bowlers. | [`high_band_triggers.png`](research_readout/10_charts/slide_04_high_pressure_meaning/high_band_triggers.png) |
+| **Does a wicket still matter?** | Yes, but it no longer decides everything. **75.6%** of batter high-band balls follow a wicket, down from 99.9%. | [`shock_event_summary.csv`](research_readout/06_shock/shock_event_summary.csv) |
+| **Do expected runs and wickets add anything?** | Barely, ball by ball. Error per ball is **1.299** against **1.328** for a constant, and the wicket model's AUC is **0.560**. The wickets-down cell is what earns its place: runs above expectation at 8 or 9 down go from −0.345 to −0.044 a ball. | [`calibration_deciles.png`](research_readout/10_charts/slide_05_expectation_models/calibration_deciles.png) |
+| **Is the pressure layer decoration?** | No. Baseline alone agrees with the full score on **10 of the top 20** batters and 10 of the top 20 bowlers. Rank correlation is 0.78 and 0.66. | [`ablation_overlap.png`](research_readout/10_charts/slide_12_ablation/ablation_overlap.png) |
+| **Does it survive a nudge?** | The order holds. Four other pressure weightings, equal thirds included, keep the batting order at Spearman **0.86 to 0.96** and the bowling order at **0.84 to 0.95**. The exact top 20 does move: 8 to 17 of 20 stay. Dropping super overs changes nothing at the top. Halving or doubling the Elo step moves rank correlation by about 0.01. | [`pressure_weight_sensitivity.png`](research_readout/10_charts/slide_04_high_pressure_meaning/pressure_weight_sensitivity.png) |
+| **What broke on the way?** | Six fixes went in. The worst was a look-ahead at ball 19 that read the innings total into the run-of-play window. The ranking floor went from 30 to 60 high-band balls, so a bowler cannot reach the top 10 on a thin sample. Against the model before the fixes, 9 of the top 20 batters and 12 of the top 20 bowlers are still there. | [`model_fixes.md`](research_readout/12_model_fixes/model_fixes.md) |
+
+&nbsp;
+
+## One shock, one career
+
+<table>
+<tr>
+<td width="50%" valign="top" align="center">
+<img src="research_readout/10_charts/slide_07_shock/ipl2025_final_shock_timeline.png" alt="Pressure through the Punjab Kings chase in the IPL 2025 final" width="100%">
+<br><sub><b>A wicket resets the next six balls.</b> IPL 2025 final, Punjab Kings chasing 191. It is a final, so pressure starts high. Wickets at balls 30, 51, 58 and 73 each send the next six into the band. After the fifth, at ball 98, batter pressure passes 8.</sub>
+</td>
+<td width="50%" valign="top" align="center">
+<img src="research_readout/10_charts/slide_buttler/buttler_career.png" alt="Jos Buttler, innings by innings, and how they build the published score" width="100%">
+<br><sub><b>Jos Buttler, 5th of 141.</b> A strike rate of 155 across five years gives the baseline. Five high-pressure spells give the clutch term: a 107 off 59 chase against KKR and an 11-ball qualifier cameo lift it, and two IPL finals pull it back.</sub>
+</td>
+</tr>
+</table>
+
+&nbsp;
+
+## Does it see pressure where a cricketer would?
+
+<table>
+<tr>
+<td width="50%" valign="top" align="center">
+<img src="research_readout/10_charts/slide_04_high_pressure_meaning/high_band_triggers.png" alt="What the batter high band is made of" width="100%">
+<br><sub><b>What the batter high band is made of.</b> Death overs are 49% of it, chases are 64%, and knockouts are in it. A recent wicket still lifts a ball, but it no longer decides.</sub>
+</td>
+<td width="50%" valign="top" align="center">
+<img src="research_readout/10_charts/slide_03_pressure/phase_arm_high_share.png" alt="Share of balls in the bowler high band by phase and by pace or spin" width="100%">
+<br><sub><b>The bowler side, and where it disagrees.</b> The high band is cut inside pace and inside spin. It still sits mostly in the powerplay: 35% of pace powerplay balls are high, against 9% at the death.</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top" align="center">
+<img src="research_readout/10_charts/slide_11_sanity_checks/sanity_players.png" alt="Sanity-check players and their composite scores" width="100%">
+<br><sub><b>Known names, known stories.</b> Established players land where a coach would expect them. Short samples are held out of the table, and the chart says why.</sub>
+</td>
+<td width="50%" valign="top" align="center">
+<img src="research_readout/10_charts/slide_12_ablation/ablation_overlap.png" alt="Top 20 overlap with the official ranking when each piece is removed or changed" width="100%">
+<br><sub><b>Take a piece out, see who moves.</b> Each bar is how many of the official top 20 survive. Baseline alone keeps only 10.</sub>
+</td>
+</tr>
+</table>
+
+&nbsp;
+
+## Where it is soft
+
+> [!WARNING]
+> **The bowler high band leans toward the powerplay.** 72.1% of pace high-band balls are in the powerplay and 10.5% at the death. A cricketer would expect it the other way. It comes from the bowler difficulty table, which makes a ball easier once wickets are down. It is left as found and written up as limitation M-17.
+
+> [!NOTE]
+> **The weights and the role mix are choices, not discoveries.** The pressure weights are 0.60, 0.25 and 0.15. Batters are compared half within their role and half against everyone. The audit shows what each choice does to the table, and does not claim either is the truth. Season decay was not re-run as a sensitivity.
+
+> [!NOTE]
+> **A single ball is hard to predict.** The expected-runs model explains 1.6% of the variance in a ball. It sets a fair baseline, not a forecast.
+
+The full register of limitations, with status, is in [`research_readout/09_limitations/`](research_readout/09_limitations).
+
+&nbsp;
+
+## Run it
+
+<details>
+<summary><b>The dashboard, locally</b></summary>
+
+```bash
+pip install pandas numpy
+python website/build_data.py     # runs the model, writes website/data/ratings.db and ratings/*.csv
+python website/serve.py          # http://127.0.0.1:8765/
+```
+
+The public site serves `website/static` and an `/api` function from `api/index.py`.
+
+</details>
+
+<details>
+<summary><b>The audit, from scratch</b></summary>
+
+```bash
+pip install pandas numpy matplotlib
+cd research_readout/_scripts
+python run_pipeline.py
+python a_dataset_pressure.py
+python b_components_elo_models.py
+python c_shock_rankings_validation.py
+python d_charts.py
+python e_reports.py
+python f_summary_txt.py
+```
+
+It takes several minutes. The scripts write only inside `research_readout/`. Start at [`11_presentation_summary/slide_by_slide_numbers.md`](research_readout/11_presentation_summary/slide_by_slide_numbers.md).
+
+</details>
+
+<details>
+<summary><b>Redraw the graphics on this page</b></summary>
+
+```bash
+python assets/build_assets.py
+```
+
+The banner is the real pressure series from the IPL 2025 final. The podium reads the published top-10 tables.
+
+</details>
+
+&nbsp;
+
+## What is where
+
+```
+player_ratings.py            the model: situation, pressure, Elo, expectation, seven pieces, rank
+silver/                      cleaned matches, competitions, teams, playing lists, ball by ball
+website/                     the dashboard: build_data.py, serve.py, static/ (the report PDF is here too)
+api/                         the serverless entry point for the public dashboard
+ratings/                     batters.csv and bowlers.csv, the published scores
+research_readout/
+  01_dataset  02_pressure  03_components  04_elo  05_expectation_models  06_shock
+  07_rankings  08_validation  09_limitations  10_charts  11_presentation_summary  12_model_fixes
+assets/                      the graphics above and the script that draws them
+```
 
 <p align="center">
-  <img src="research_readout/10_charts/slide_06_elo/batter_elo_trajectories.png" alt="Batter Elo paths in the IPL and in T20Is" width="920">
-</p>
-
-The method, the formulas, and the worked examples are in the [methodology readout](website/static/ShouryaPratapSingh_SupeRR_Methodology_Readout.pdf).
-
----
-
-## What else is in the repo
-
-| | |
-|---|---|
-| [`player_ratings.py`](player_ratings.py) | The model. Situation, pressure, Elo, expectation, the seven terms, the rank. |
-| [`silver/`](silver) | Matches, competitions, teams, playing lists, and the ball-by-ball file the ratings read. |
-| [`website/`](website) | The board. `build_data.py` writes `website/data/ratings.db`. `serve.py` serves it. |
-| [`website/static/ShouryaPratapSingh_SupeRR_Methodology_Readout.pdf`](website/static/ShouryaPratapSingh_SupeRR_Methodology_Readout.pdf) | The written method. |
-| [`research_readout/`](research_readout) | The audit. Every chart and table above is regenerated from the model, inside this folder. |
-| [`research_readout/11_presentation_summary/key_findings.md`](research_readout/11_presentation_summary/key_findings.md) | The short list of what changed and what held. |
-| [`research_readout/09_limitations/`](research_readout/09_limitations) | The open items, in a register. |
-| [`research_readout/10_charts/`](research_readout/10_charts) | One folder of charts per slide. |
-
-The audit’s own map, and how to rerun it, is [`research_readout/README.md`](research_readout/README.md).
-
----
-
-## Read this with the table
-
-The high band for batters now follows the match. Finals sit in it. A wicket still lifts the next over. For bowlers the same difficulty table pulls the high band toward the powerplay, because wickets down make the bowler’s ball easier. That is a property of the current table, and it is visible in the phase chart.
-
-A single ball is only weakly predictable. Expected runs barely beat a constant. The wickets-down cell is what removes the tail bias: at 8 or 9 down, runs above expectation go from −0.35 a ball to −0.04.
-
-The weights, and the half-and-half role blend, are choices. Neighbouring weights leave the batting order at Spearman 0.90 to 0.96 and the bowling order at 0.86 to 0.95. Dropping the baseline still removes 6 of the top 20 batters and 3 of the top 20 bowlers. The pressure layer is doing work. It is not the whole score.
-
-<p align="center">
-  Shourya Pratap Singh &nbsp;·&nbsp; SupeRR Selector, Season 2
+  <sub>Built by <a href="https://linkedin.com/in/amspsingh04">Shourya Pratap Singh</a> for SupeRR Selector, Season 2.</sub>
 </p>

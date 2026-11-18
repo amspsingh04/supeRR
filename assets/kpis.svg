@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="150" viewBox="0 0 1280 150" role="img" aria-label="Dataset at a glance">
+<rect width="1280" height="150" fill="#f6f3ec" rx="18"/>
+<rect x="10.5" y="14.5" width="232" height="121" rx="16" fill="#fffdf8" stroke="#ddd6c8"/>
+<rect x="32.0" y="36" width="26" height="4" rx="2" fill="#0f6e56"/>
+<text x="32.0" y="86" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="600" fill="#1c1915">192,445</text>
+<text x="32.0" y="114" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#5e584f">legal balls rated</text>
+<rect x="267.5" y="14.5" width="232" height="121" rx="16" fill="#fffdf8" stroke="#ddd6c8"/>
+<rect x="289.0" y="36" width="26" height="4" rx="2" fill="#0f6e56"/>
+<text x="289.0" y="86" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="600" fill="#1c1915">867</text>
+<text x="289.0" y="114" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#5e584f">matches, Jan 2022 to Nov 2026</text>
+<rect x="524.5" y="14.5" width="232" height="121" rx="16" fill="#fffdf8" stroke="#ddd6c8"/>
+<rect x="546.0" y="36" width="26" height="4" rx="2" fill="#0f6e56"/>
+<text x="546.0" y="86" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="600" fill="#1c1915">888 + 647</text>
+<text x="546.0" y="114" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#5e584f">batters and bowlers seen</text>
+<rect x="781.5" y="14.5" width="232" height="121" rx="16" fill="#fffdf8" stroke="#ddd6c8"/>
+<rect x="803.0" y="36" width="26" height="4" rx="2" fill="#0f6e56"/>
+<text x="803.0" y="86" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="600" fill="#1c1915">141 + 143</text>
+<text x="803.0" y="114" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#5e584f">batters and bowlers ranked</text>
+<rect x="1038.5" y="14.5" width="232" height="121" rx="16" fill="#fffdf8" stroke="#ddd6c8"/>
+<rect x="1060.0" y="36" width="26" height="4" rx="2" fill="#0f6e56"/>
+<text x="1060.0" y="86" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="600" fill="#1c1915">7</text>
+<text x="1060.0" y="114" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#5e584f">pieces in every score</text>
+</svg>

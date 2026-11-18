@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="190" viewBox="0 0 1280 190" role="img" aria-label="The seven pieces of the score and their weights">
+<rect width="1280" height="190" fill="#f6f3ec" rx="18"/>
+<text x="28" y="40" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="600" fill="#1c1915">One score, seven pieces</text>
+<text x="1252" y="40" text-anchor="end" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#5e584f">Bar widths are the published weights. They sum to 1.00.</text>
+<rect x="28.0" y="58" width="240.0" height="64" rx="10" fill="#4472c4"/>
+<text x="42.0" y="84" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Baseline</text>
+<text x="42.0" y="109" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#ffffff">0.20</text>
+<text x="30.0" y="146" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">career rate against</text>
+<text x="30.0" y="163" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">the phases he plays</text>
+<rect x="272.0" y="58" width="120.0" height="64" rx="10" fill="#a5a5a5"/>
+<text x="286.0" y="84" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1c1915">Quiet</text>
+<text x="286.0" y="109" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#1c1915">0.10</text>
+<text x="274.0" y="146" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">the easy half</text>
+<text x="274.0" y="163" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">of balls</text>
+<rect x="396.0" y="58" width="180.0" height="64" rx="10" fill="#ffc000"/>
+<text x="410.0" y="84" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1c1915">Squeeze</text>
+<text x="410.0" y="109" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#1c1915">0.15</text>
+<text x="398.0" y="146" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">the game starts</text>
+<text x="398.0" y="163" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">to tighten</text>
+<rect x="580.0" y="58" width="240.0" height="64" rx="10" fill="#c00000"/>
+<text x="594.0" y="84" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">High pressure</text>
+<text x="594.0" y="109" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#ffffff">0.20</text>
+<text x="582.0" y="146" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">the tightest</text>
+<text x="582.0" y="163" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">fifth of balls</text>
+<rect x="824.0" y="58" width="180.0" height="64" rx="10" fill="#7030a0"/>
+<text x="838.0" y="84" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Clutch</text>
+<text x="838.0" y="109" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#ffffff">0.15</text>
+<text x="826.0" y="146" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">beats his own rate</text>
+<text x="826.0" y="163" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">in a hard spell</text>
+<rect x="1008.0" y="58" width="120.0" height="64" rx="10" fill="#70ad47"/>
+<text x="1022.0" y="84" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1c1915">Same innings</text>
+<text x="1022.0" y="109" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#1c1915">0.10</text>
+<text x="1010.0" y="146" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">against the others</text>
+<text x="1010.0" y="163" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">in the same match</text>
+<rect x="1132.0" y="58" width="120.0" height="64" rx="10" fill="#264478"/>
+<text x="1146.0" y="84" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Consistency</text>
+<text x="1146.0" y="109" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#ffffff">0.10</text>
+<text x="1134.0" y="146" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">a narrow spread</text>
+<text x="1134.0" y="163" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#5e584f">match to match</text>
+</svg>
